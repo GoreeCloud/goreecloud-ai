@@ -40,6 +40,10 @@ The repository now contains the first executable product foundation:
 - Persistent conversation storage with list/create/read/update/delete APIs and atomic restrictive local writes.
 - Conversation history integrated into the UI with automatic titles, loading, saving, model association, renaming, and deletion.
 - Message-level copy, user-message edit-and-resubmit, assistant regeneration, and conversation branching controls.
+- Explicit branch lineage metadata linking branched conversations to their parent conversation and branch point.
+- Markdown and GitHub-Flavored Markdown rendering for assistant responses, including headings, lists, links, blockquotes, code, and tables.
+- Glaze UI-native rename/edit dialogs replacing browser-native prompt dialogs.
+- Generation interruption recovery with retry state and preservation of the last valid conversation state.
 - Repository-local candidate icon and logo artwork with an explicit visual-identity approval gate.
 
 Identity sessions, Workspaces, knowledge, RAG, GoreeCloud Search, production Wardveil enforcement, Privacy Shield evidence, Everkeep state, and Mesh contracts remain to be implemented.
@@ -81,7 +85,7 @@ PATCH  /api/conversations/:id
 DELETE /api/conversations/:id
 ```
 
-The conversation API currently uses a simple repository-independent JSON persistence adapter under `GOREECLOUD_AI_DATA_DIR`. This is an early native persistence boundary, not the final multi-user database design.
+The conversation API currently uses a simple repository-independent JSON persistence adapter under `GOREECLOUD_AI_DATA_DIR`. This is an early native persistence boundary, not the final multi-user database design. Conversation records now preserve optional parent-conversation and branch-point metadata so lineage survives storage changes.
 
 ## Local development
 
@@ -132,7 +136,7 @@ See [`docs/visual-identity.md`](docs/visual-identity.md) for the concept, asset 
 
 ## Development roadmap
 
-1. Harden conversation editing, regeneration, branch lineage, optimistic persistence, and error/recovery states.
+1. Continue conversation reliability work with optimistic-persistence conflict handling, stronger keyboard/accessibility behavior, and automated interaction tests.
 2. Complete backend hardening and GoreeCloud Identity-backed authenticated sessions.
 3. Add model-role abstraction and runtime capability metadata.
 4. Build Workspaces and the native file/attachment library.
