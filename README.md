@@ -33,20 +33,26 @@ The repository now contains the first executable product foundation:
 - Adaptive navigation/context panel, system light/dark appearance, and reduced-motion support.
 - Local-first Privacy Shield processing presentation.
 - Model discovery, streaming NDJSON chat, stop-generation support, and functional runtime model selection.
+- Stable GoreeCloud model-role abstraction for Assistant, Reasoner, Engineer, Utility, Embeddings, and optional Vision/Second Opinion roles.
+- Runtime role resolution that maps approved user-facing roles to installed Ollama models without making the underlying model name the permanent product identity.
 - First-party Node.js backend gateway with Ollama model discovery and streaming chat proxies.
 - Request validation, body-size limits, cancellation propagation, timeouts, no-store responses, and upstream failure isolation.
 - Optional bearer-token protection for direct API access during early development.
 - Health endpoint at `/api/health`.
 - Persistent conversation storage with list/create/read/update/delete APIs and atomic restrictive local writes.
-- Conversation history integrated into the UI with automatic titles, loading, saving, model association, renaming, and deletion.
+- Conversation history integrated into the UI with automatic titles, loading, saving, model association, Workspace association, renaming, and deletion.
 - Message-level copy, user-message edit-and-resubmit, assistant regeneration, and conversation branching controls.
 - Explicit branch lineage metadata linking branched conversations to their parent conversation and branch point.
 - Markdown and GitHub-Flavored Markdown rendering for assistant responses, including headings, lists, links, blockquotes, code, and tables.
-- Glaze UI-native rename/edit dialogs replacing browser-native prompt dialogs.
+- Glaze UI-native rename/edit/Workspace dialogs replacing browser-native prompt dialogs.
 - Generation interruption recovery with retry state and preservation of the last valid conversation state.
+- Native Workspace persistence/API foundation for instructions, default model role, file references, knowledge collections, tools, and research preference state.
+- Workspace selection in the conversation context panel with default-role model selection when a matching runtime model is available.
+- Native attachment storage/API foundation with streamed local file writes, metadata records, per-file size limits, restrictive permissions, and Workspace association.
+- Browser attachment selection and upload flow with local-storage status presentation.
 - Repository-local candidate icon and logo artwork with an explicit visual-identity approval gate.
 
-Identity sessions, Workspaces, knowledge, RAG, GoreeCloud Search, production Wardveil enforcement, Privacy Shield evidence, Everkeep state, and Mesh contracts remain to be implemented.
+GoreeCloud Identity sessions, file ingestion/parsing, embeddings, indexing, retrieval/RAG, GoreeCloud Search, production Wardveil enforcement, Privacy Shield evidence, Everkeep state, Mesh contracts, and production database migration remain to be implemented.
 
 ## Architecture
 
@@ -60,7 +66,9 @@ GoreeCloud AI backend
         |
         +-- GoreeCloud Identity authentication/session boundary [planned]
         +-- conversation persistence                           [foundation]
-        +-- Workspace persistence                              [planned]
+        +-- Workspace persistence                              [foundation]
+        +-- file storage and metadata                          [foundation]
+        +-- knowledge ingestion / RAG                          [planned]
         +-- Privacy Shield processing disclosure/evidence      [planned]
         +-- Wardveil Security policy/enforcement               [planned]
         +-- Everkeep export/recovery state                     [planned]
@@ -72,20 +80,50 @@ GoreeCloud AI backend
               Ollama
 ```
 
+## Model roles
+
+GoreeCloud AI presents stable functional roles while keeping individual model implementations replaceable. The initial role definitions follow the GoreeCloud multi-model strategy:
+
+| GoreeCloud role | Intended function | Initial candidate family |
+| --- | --- | --- |
+| GoreeCloud Assistant | General conversation and assistance | Qwen 3.5 |
+| GoreeCloud Reasoner | Complex reasoning, architecture, and research | GPT-OSS |
+| GoreeCloud Engineer | Infrastructure engineering, coding, and configuration | Qwen3-Coder |
+| GoreeCloud Utility | Lightweight and recurring AI processing | Qwen3 |
+| GoreeCloud Embeddings | Semantic retrieval and RAG indexing | Qwen3-Embedding |
+| GoreeCloud Vision | Optional specialized visual analysis | Gemma-family candidate |
+| GoreeCloud Second Opinion | Optional independent reasoning and validation | DeepSeek-R1-family candidate |
+
+Candidate models are not permanent dependencies. GoreeCloud AI resolves roles against installed runtime models and can still expose unmatched installed models in the advanced model picker.
+
 ## API foundation
 
 ```text
 GET    /api/health
 GET    /api/ollama/models
 POST   /api/ollama/chat
+
 GET    /api/conversations
 POST   /api/conversations
 GET    /api/conversations/:id
 PATCH  /api/conversations/:id
 DELETE /api/conversations/:id
+
+GET    /api/workspaces
+POST   /api/workspaces
+GET    /api/workspaces/:id
+PATCH  /api/workspaces/:id
+DELETE /api/workspaces/:id
+
+GET    /api/files
+POST   /api/files
+GET    /api/files/:id
+DELETE /api/files/:id
 ```
 
-The conversation API currently uses a simple repository-independent JSON persistence adapter under `GOREECLOUD_AI_DATA_DIR`. This is an early native persistence boundary, not the final multi-user database design. Conversation records now preserve optional parent-conversation and branch-point metadata so lineage survives storage changes.
+The current conversation and Workspace APIs use repository-independent JSON persistence adapters under `GOREECLOUD_AI_DATA_DIR`. This is an early native persistence boundary, not the final multi-user database design. Attachment bytes are stored separately from their metadata and are not committed to source control.
+
+`POST /api/files` currently accepts one raw file body with `X-File-Name` and optional `X-Workspace-Id` headers. This is a development attachment contract; ingestion, malware/content scanning, MIME verification, document parsing, image processing, indexing, and RAG participation are separate future stages and must not be inferred from successful storage alone.
 
 ## Local development
 
@@ -112,8 +150,9 @@ The backend binds to loopback by default. Production publication and reverse-pro
 | `PORT` | `8787` | Local GoreeCloud AI backend port. |
 | `OLLAMA_URL` | `http://127.0.0.1:11434` | Ollama runtime address visible to the backend. |
 | `GOREECLOUD_AI_API_TOKEN` | unset | Optional early-development bearer token; not the final GoreeCloud Identity design. |
-| `GOREECLOUD_AI_DATA_DIR` | `./data` | Local development persistence directory. |
+| `GOREECLOUD_AI_DATA_DIR` | `./data` | Local development persistence and attachment directory. |
 | `MAX_BODY_BYTES` | `1000000` | Maximum accepted JSON request body size. |
+| `MAX_FILE_BYTES` | `26214400` | Maximum accepted attachment size in bytes for the current development endpoint. |
 | `REQUEST_TIMEOUT_MS` | `120000` | Upstream request timeout. |
 
 Do not commit `.env`, `data/`, or reusable credentials.
@@ -126,7 +165,7 @@ npm run check:server
 npm run build
 ```
 
-Successful source checks do not by themselves establish production readiness, security acceptance, Stable qualification, or correct behavior against a live Ollama runtime.
+Successful source checks do not by themselves establish production readiness, security acceptance, Stable qualification, safe file-ingestion behavior, or correct behavior against a live Ollama runtime.
 
 ## Visual identity
 
@@ -136,11 +175,11 @@ See [`docs/visual-identity.md`](docs/visual-identity.md) for the concept, asset 
 
 ## Development roadmap
 
-1. Continue conversation reliability work with optimistic-persistence conflict handling, stronger keyboard/accessibility behavior, and automated interaction tests.
+1. Harden Workspace and attachment behavior, including deletion coordination, quotas, validated media types, ingestion state, and accessibility/interaction tests.
 2. Complete backend hardening and GoreeCloud Identity-backed authenticated sessions.
-3. Add model-role abstraction and runtime capability metadata.
-4. Build Workspaces and the native file/attachment library.
-5. Implement ingestion, embeddings, indexing, retrieval, citations, and native RAG.
+3. Add richer Ollama runtime capability metadata such as context, multimodal/embedding compatibility, loaded state, and validated resource information where the runtime safely exposes it.
+4. Implement native file ingestion, extraction, normalization, chunking, and provenance metadata.
+5. Implement embeddings, indexing, retrieval, citations, and native RAG with Workspace and permission filtering.
 6. Integrate GoreeCloud Search for current-information research and source citations.
 7. Add tool and agent execution boundaries governed by Wardveil Security.
 8. Implement Privacy Shield processing evidence and user-facing controls.
@@ -151,9 +190,9 @@ See [`docs/visual-identity.md`](docs/visual-identity.md) for the concept, asset 
 
 ## Security and privacy direction
 
-The current backend is intentionally narrow. It validates chat payload shape, limits request-body size, isolates upstream failures, supports cancellation, applies timeouts, avoids cacheable API responses, and writes the development conversation store atomically with restrictive permissions. These are development controls, not a claim that Wardveil Security or Privacy Shield implementation is complete.
+The current backend is intentionally narrow. It validates chat payload shape, limits JSON and attachment request size, isolates upstream failures, supports cancellation, applies timeouts, avoids cacheable API responses, and writes development conversation, Workspace, file metadata, and attachment state with restrictive local permissions. These are development controls, not a claim that Wardveil Security or Privacy Shield implementation is complete.
 
-The intended production design will replace temporary direct-token handling with GoreeCloud Identity-backed sessions and attach evidence-backed Wardveil Security, Privacy Shield, Everkeep, and Mesh state to relevant runtime operations.
+The intended production design will replace temporary direct-token handling with GoreeCloud Identity-backed sessions and attach evidence-backed Wardveil Security, Privacy Shield, Everkeep, and Mesh state to relevant runtime operations. Stored attachments will require explicit trust, validation, ingestion, indexing, retention, and deletion behavior before production use.
 
 ## License
 
