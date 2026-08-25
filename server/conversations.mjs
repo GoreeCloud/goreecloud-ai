@@ -43,6 +43,7 @@ export async function createConversation(input = {}) {
     id: randomUUID(),
     title: typeof input.title === 'string' && input.title.trim() ? input.title.trim().slice(0, 120) : 'New conversation',
     model: typeof input.model === 'string' ? input.model : '',
+    workspaceId: typeof input.workspaceId === 'string' ? input.workspaceId : null,
     messages: [],
     parentConversationId: typeof input.parentConversationId === 'string' ? input.parentConversationId : null,
     parentMessageIndex: Number.isInteger(input.parentMessageIndex) && input.parentMessageIndex >= 0 ? input.parentMessageIndex : null,
@@ -63,6 +64,7 @@ export async function updateConversation(id, patch = {}) {
     ...current,
     ...(typeof patch.title === 'string' ? { title: patch.title.trim().slice(0, 120) || current.title } : {}),
     ...(typeof patch.model === 'string' ? { model: patch.model } : {}),
+    ...(patch.workspaceId === null || typeof patch.workspaceId === 'string' ? { workspaceId: patch.workspaceId } : {}),
     ...(Array.isArray(patch.messages) ? { messages: patch.messages } : {}),
     updatedAt: now(),
   }
