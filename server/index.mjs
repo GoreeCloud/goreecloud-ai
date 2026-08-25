@@ -1,5 +1,6 @@
 import http from 'node:http'
 import { createConversation, deleteConversation, getConversation, listConversations, updateConversation } from './conversations.mjs'
+import { createWorkspace, deleteWorkspace, getWorkspace, listWorkspaces, updateWorkspace } from './workspaces.mjs'
 
 const PORT = Number(process.env.PORT ?? 8787)
 const OLLAMA_URL = (process.env.OLLAMA_URL ?? 'http://127.0.0.1:11434').replace(/\/$/, '')
@@ -91,6 +92,26 @@ async function handleConversations(req, res, pathname) {
   return false
 }
 
+async function handleWorkspaces(req, res, pathname) {
+  if (pathname === '/api/workspaces') {
+    if (req.method === 'GET') return json(res, 200, { workspaces: await listWorkspaces() })
+    if (req.method === 'POST') return json(res, 201, await createWorkspace(await readJson(req)))
+  }
+  const match = pathname.match(/^\/api\/workspaces\/([0-9a-f-]+)$/i)
+  if (!match) return false
+  const id = match[1]
+  if (req.method === 'GET') {
+    const workspace = await getWorkspace(id)
+    return workspace ? json(res, 200, workspace) : json(res, 404, { error: 'Workspace not found' })
+  }
+  if (req.method === 'PATCH') {
+    const workspace = await updateWorkspace(id, await readJson(req))
+    return workspace ? json(res, 200, workspace) : json(res, 404, { error: 'Workspace not found' })
+  }
+  if (req.method === 'DELETE') return (await deleteWorkspace(id)) ? json(res, 200, { deleted: true }) : json(res, 404, { error: 'Workspace not found' })
+  return false
+}
+
 const server = http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url ?? '/', 'http://localhost')
@@ -100,6 +121,10 @@ const server = http.createServer(async (req, res) => {
     if (url.pathname === '/api/ollama/chat' && req.method === 'POST') return await handleChat(req, res)
     if (url.pathname.startsWith('/api/conversations')) {
       const handled = await handleConversations(req, res, url.pathname)
+      if (handled !== false) return handled
+    }
+    if (url.pathname.startsWith('/api/workspaces')) {
+      const handled = await handleWorkspaces(req, res, url.pathname)
       if (handled !== false) return handled
     }
     json(res, 404, { error: 'Not found' })
