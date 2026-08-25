@@ -1,11 +1,13 @@
 import http from 'node:http'
 import { createConversation, deleteConversation, getConversation, listConversations, updateConversation } from './conversations.mjs'
 import { createWorkspace, deleteWorkspace, getWorkspace, listWorkspaces, updateWorkspace } from './workspaces.mjs'
+import { deleteFile, getFileRecord, listFiles, storeFile } from './files.mjs'
 
 const PORT = Number(process.env.PORT ?? 8787)
 const OLLAMA_URL = (process.env.OLLAMA_URL ?? 'http://127.0.0.1:11434').replace(/\/$/, '')
 const API_TOKEN = process.env.GOREECLOUD_AI_API_TOKEN?.trim()
 const MAX_BODY_BYTES = Number(process.env.MAX_BODY_BYTES ?? 1_000_000)
+const MAX_FILE_BYTES = Number(process.env.MAX_FILE_BYTES ?? 25 * 1024 * 1024)
 const REQUEST_TIMEOUT_MS = Number(process.env.REQUEST_TIMEOUT_MS ?? 120_000)
 
 function json(res, status, payload) {
@@ -112,6 +114,22 @@ async function handleWorkspaces(req, res, pathname) {
   return false
 }
 
+async function handleFiles(req, res, pathname) {
+  if (pathname === '/api/files') {
+    if (req.method === 'GET') return json(res, 200, { files: await listFiles() })
+    if (req.method === 'POST') return json(res, 201, await storeFile(req, MAX_FILE_BYTES))
+  }
+  const match = pathname.match(/^\/api\/files\/([0-9a-f-]+)$/i)
+  if (!match) return false
+  const id = match[1]
+  if (req.method === 'GET') {
+    const record = await getFileRecord(id)
+    return record ? json(res, 200, record) : json(res, 404, { error: 'File not found' })
+  }
+  if (req.method === 'DELETE') return (await deleteFile(id)) ? json(res, 200, { deleted: true }) : json(res, 404, { error: 'File not found' })
+  return false
+}
+
 const server = http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url ?? '/', 'http://localhost')
@@ -125,6 +143,10 @@ const server = http.createServer(async (req, res) => {
     }
     if (url.pathname.startsWith('/api/workspaces')) {
       const handled = await handleWorkspaces(req, res, url.pathname)
+      if (handled !== false) return handled
+    }
+    if (url.pathname.startsWith('/api/files')) {
+      const handled = await handleFiles(req, res, url.pathname)
       if (handled !== false) return handled
     }
     json(res, 404, { error: 'Not found' })
