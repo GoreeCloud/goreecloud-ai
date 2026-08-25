@@ -4,6 +4,7 @@ export interface ConversationSummary {
   id: string
   title: string
   model: string
+  workspaceId?: string | null
   createdAt: string
   updatedAt: string
   messageCount: number
@@ -18,6 +19,7 @@ export interface Conversation extends Omit<ConversationSummary, 'messageCount'> 
 interface CreateConversationInput {
   model?: string
   title?: string
+  workspaceId?: string | null
   parentConversationId?: string | null
   parentMessageIndex?: number | null
 }
@@ -42,8 +44,11 @@ export function createConversation(input: string | CreateConversationInput = '')
   return request('/api/conversations', { method: 'POST', body: JSON.stringify(body) })
 }
 
-export function saveConversation(conversation: Pick<Conversation, 'id' | 'title' | 'model' | 'messages'>): Promise<Conversation> {
-  return request(`/api/conversations/${conversation.id}`, { method: 'PATCH', body: JSON.stringify({ title: conversation.title, model: conversation.model, messages: conversation.messages }) })
+export function saveConversation(conversation: Pick<Conversation, 'id' | 'title' | 'model' | 'messages'> & { workspaceId?: string | null }): Promise<Conversation> {
+  return request(`/api/conversations/${conversation.id}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ title: conversation.title, model: conversation.model, messages: conversation.messages, ...(conversation.workspaceId !== undefined ? { workspaceId: conversation.workspaceId } : {}) }),
+  })
 }
 
 export async function removeConversation(id: string): Promise<void> {
