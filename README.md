@@ -32,17 +32,17 @@ The repository now contains the first executable product foundation:
 - React + TypeScript + Vite client and responsive Glaze UI-inspired conversation shell.
 - Adaptive navigation/context panel, system light/dark appearance, and reduced-motion support.
 - Local-first Privacy Shield processing presentation.
-- Model discovery, streaming NDJSON chat, and stop-generation support.
+- Model discovery, streaming NDJSON chat, stop-generation support, and functional runtime model selection.
 - First-party Node.js backend gateway with Ollama model discovery and streaming chat proxies.
 - Request validation, body-size limits, cancellation propagation, timeouts, no-store responses, and upstream failure isolation.
 - Optional bearer-token protection for direct API access during early development.
 - Health endpoint at `/api/health`.
-- Persistent conversation storage foundation with list/create/read/update/delete APIs.
-- Atomic local conversation-store writes with restrictive file permissions.
-- Browser conversation-persistence client ready for UI integration.
+- Persistent conversation storage with list/create/read/update/delete APIs and atomic restrictive local writes.
+- Conversation history integrated into the UI with automatic titles, loading, saving, model association, renaming, and deletion.
+- Message-level copy, user-message edit-and-resubmit, assistant regeneration, and conversation branching controls.
 - Repository-local candidate icon and logo artwork with an explicit visual-identity approval gate.
 
-Persistent conversation APIs are now present, but the visible conversation shell has not yet been wired to load/save that store. Identity sessions, Workspaces, knowledge, RAG, GoreeCloud Search, production Wardveil enforcement, Privacy Shield evidence, Everkeep state, and Mesh contracts remain to be implemented.
+Identity sessions, Workspaces, knowledge, RAG, GoreeCloud Search, production Wardveil enforcement, Privacy Shield evidence, Everkeep state, and Mesh contracts remain to be implemented.
 
 ## Architecture
 
@@ -68,11 +68,7 @@ GoreeCloud AI backend
               Ollama
 ```
 
-Keeping Ollama behind this boundary allows GoreeCloud AI to own authentication, authorization, request controls, auditability, processing disclosures, cancellation, runtime location, future provider abstraction, and security policy rather than exposing the model runtime directly to browsers.
-
 ## API foundation
-
-Current development endpoints:
 
 ```text
 GET    /api/health
@@ -85,17 +81,11 @@ PATCH  /api/conversations/:id
 DELETE /api/conversations/:id
 ```
 
-`POST /api/ollama/chat` accepts an Ollama-style model and message array and streams Ollama-compatible NDJSON back to the client. The gateway deliberately forwards only the fields currently required by GoreeCloud AI rather than acting as an unrestricted Ollama pass-through.
-
-The conversation API currently uses a simple repository-independent JSON persistence adapter under `GOREECLOUD_AI_DATA_DIR`. This is an early native persistence boundary, not the final multi-user database design. It is intentionally isolated so the storage implementation can later move to the production data architecture without coupling the client to a storage engine.
+The conversation API currently uses a simple repository-independent JSON persistence adapter under `GOREECLOUD_AI_DATA_DIR`. This is an early native persistence boundary, not the final multi-user database design.
 
 ## Local development
 
-Requirements for the current slice:
-
-- A current Node.js runtime with built-in `fetch` support.
-- npm.
-- Ollama reachable by the backend, defaulting to `http://127.0.0.1:11434`.
+Requirements: a current Node.js runtime with built-in `fetch`, npm, and Ollama reachable by the backend.
 
 ```bash
 npm install
@@ -117,7 +107,7 @@ The backend binds to loopback by default. Production publication and reverse-pro
 | --- | --- | --- |
 | `PORT` | `8787` | Local GoreeCloud AI backend port. |
 | `OLLAMA_URL` | `http://127.0.0.1:11434` | Ollama runtime address visible to the backend. |
-| `GOREECLOUD_AI_API_TOKEN` | unset | Optional early-development bearer token for direct API clients; not the final GoreeCloud Identity design. |
+| `GOREECLOUD_AI_API_TOKEN` | unset | Optional early-development bearer token; not the final GoreeCloud Identity design. |
 | `GOREECLOUD_AI_DATA_DIR` | `./data` | Local development persistence directory. |
 | `MAX_BODY_BYTES` | `1000000` | Maximum accepted JSON request body size. |
 | `REQUEST_TIMEOUT_MS` | `120000` | Upstream request timeout. |
@@ -132,7 +122,7 @@ npm run check:server
 npm run build
 ```
 
-Successful source checks do not by themselves establish production readiness, security acceptance, Stable qualification, or correct behavior against a live Ollama runtime. Those require runtime and release validation.
+Successful source checks do not by themselves establish production readiness, security acceptance, Stable qualification, or correct behavior against a live Ollama runtime.
 
 ## Visual identity
 
@@ -142,9 +132,7 @@ See [`docs/visual-identity.md`](docs/visual-identity.md) for the concept, asset 
 
 ## Development roadmap
 
-Near-term implementation sequence:
-
-1. Wire persistent conversations into the UI, including history, titles, message saving, deletion, editing, regeneration, and branching.
+1. Harden conversation editing, regeneration, branch lineage, optimistic persistence, and error/recovery states.
 2. Complete backend hardening and GoreeCloud Identity-backed authenticated sessions.
 3. Add model-role abstraction and runtime capability metadata.
 4. Build Workspaces and the native file/attachment library.
@@ -161,7 +149,7 @@ Near-term implementation sequence:
 
 The current backend is intentionally narrow. It validates chat payload shape, limits request-body size, isolates upstream failures, supports cancellation, applies timeouts, avoids cacheable API responses, and writes the development conversation store atomically with restrictive permissions. These are development controls, not a claim that Wardveil Security or Privacy Shield implementation is complete.
 
-The intended production design will replace temporary direct-token handling with GoreeCloud Identity-backed sessions and will attach evidence-backed Wardveil Security, Privacy Shield, Everkeep, and Mesh state to the relevant runtime operations.
+The intended production design will replace temporary direct-token handling with GoreeCloud Identity-backed sessions and attach evidence-backed Wardveil Security, Privacy Shield, Everkeep, and Mesh state to relevant runtime operations.
 
 ## License
 
