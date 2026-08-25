@@ -7,10 +7,19 @@ export interface ConversationSummary {
   createdAt: string
   updatedAt: string
   messageCount: number
+  parentConversationId?: string | null
+  parentMessageIndex?: number | null
 }
 
 export interface Conversation extends Omit<ConversationSummary, 'messageCount'> {
   messages: ChatMessage[]
+}
+
+interface CreateConversationInput {
+  model?: string
+  title?: string
+  parentConversationId?: string | null
+  parentMessageIndex?: number | null
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -28,8 +37,9 @@ export function getConversation(id: string): Promise<Conversation> {
   return request(`/api/conversations/${id}`)
 }
 
-export function createConversation(model = ''): Promise<Conversation> {
-  return request('/api/conversations', { method: 'POST', body: JSON.stringify({ model }) })
+export function createConversation(input: string | CreateConversationInput = ''): Promise<Conversation> {
+  const body = typeof input === 'string' ? { model: input } : input
+  return request('/api/conversations', { method: 'POST', body: JSON.stringify(body) })
 }
 
 export function saveConversation(conversation: Pick<Conversation, 'id' | 'title' | 'model' | 'messages'>): Promise<Conversation> {
