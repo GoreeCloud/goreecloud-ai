@@ -1,0 +1,41 @@
+import type { ChatMessage } from './ollama'
+
+export interface ConversationSummary {
+  id: string
+  title: string
+  model: string
+  createdAt: string
+  updatedAt: string
+  messageCount: number
+}
+
+export interface Conversation extends Omit<ConversationSummary, 'messageCount'> {
+  messages: ChatMessage[]
+}
+
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(path, { credentials: 'same-origin', ...init, headers: { Accept: 'application/json', ...(init?.body ? { 'Content-Type': 'application/json' } : {}), ...init?.headers } })
+  if (!response.ok) throw new Error(`Conversation request failed (${response.status})`)
+  return response.json() as Promise<T>
+}
+
+export async function listConversations(): Promise<ConversationSummary[]> {
+  const data = await request<{ conversations: ConversationSummary[] }>('/api/conversations')
+  return data.conversations
+}
+
+export function getConversation(id: string): Promise<Conversation> {
+  return request(`/api/conversations/${id}`)
+}
+
+export function createConversation(model = ''): Promise<Conversation> {
+  return request('/api/conversations', { method: 'POST', body: JSON.stringify({ model }) })
+}
+
+export function saveConversation(conversation: Pick<Conversation, 'id' | 'title' | 'model' | 'messages'>): Promise<Conversation> {
+  return request(`/api/conversations/${conversation.id}`, { method: 'PATCH', body: JSON.stringify({ title: conversation.title, model: conversation.model, messages: conversation.messages }) })
+}
+
+export async function removeConversation(id: string): Promise<void> {
+  await request(`/api/conversations/${id}`, { method: 'DELETE' })
+}
