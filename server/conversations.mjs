@@ -44,6 +44,8 @@ export async function createConversation(input = {}) {
     title: typeof input.title === 'string' && input.title.trim() ? input.title.trim().slice(0, 120) : 'New conversation',
     model: typeof input.model === 'string' ? input.model : '',
     messages: [],
+    parentConversationId: typeof input.parentConversationId === 'string' ? input.parentConversationId : null,
+    parentMessageIndex: Number.isInteger(input.parentMessageIndex) && input.parentMessageIndex >= 0 ? input.parentMessageIndex : null,
     createdAt: timestamp,
     updatedAt: timestamp,
   }
