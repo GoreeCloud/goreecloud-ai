@@ -1,4 +1,5 @@
 import http from 'node:http'
+import { createConversation, deleteConversation, getConversation, listConversations, updateConversation } from './conversations.mjs'
 
 const PORT = Number(process.env.PORT ?? 8787)
 const OLLAMA_URL = (process.env.OLLAMA_URL ?? 'http://127.0.0.1:11434').replace(/\/$/, '')
@@ -7,7 +8,7 @@ const MAX_BODY_BYTES = Number(process.env.MAX_BODY_BYTES ?? 1_000_000)
 const REQUEST_TIMEOUT_MS = Number(process.env.REQUEST_TIMEOUT_MS ?? 120_000)
 
 function json(res, status, payload) {
-  res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' })
+  res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' })
   res.end(JSON.stringify(payload))
 }
 
@@ -24,30 +25,23 @@ async function readJson(req) {
     if (size > MAX_BODY_BYTES) throw Object.assign(new Error('Request body too large'), { status: 413 })
     chunks.push(chunk)
   }
-  try {
-    return JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}')
-  } catch {
-    throw Object.assign(new Error('Invalid JSON request body'), { status: 400 })
-  }
+  try { return JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}') }
+  catch { throw Object.assign(new Error('Invalid JSON request body'), { status: 400 }) }
+}
+
+function validMessages(messages) {
+  return Array.isArray(messages) && messages.every((message) => message && ['system', 'user', 'assistant'].includes(message.role) && typeof message.content === 'string')
 }
 
 function validateChat(body) {
-  if (!body || typeof body !== 'object') return false
-  if (typeof body.model !== 'string' || !body.model.trim()) return false
-  if (!Array.isArray(body.messages) || body.messages.length === 0) return false
-  return body.messages.every((message) =>
-    message && ['system', 'user', 'assistant'].includes(message.role) && typeof message.content === 'string'
-  )
+  return body && typeof body === 'object' && typeof body.model === 'string' && body.model.trim() && validMessages(body.messages) && body.messages.length > 0
 }
 
 async function ollamaFetch(path, init = {}) {
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
-  try {
-    return await fetch(`${OLLAMA_URL}${path}`, { ...init, signal: init.signal ?? controller.signal })
-  } finally {
-    clearTimeout(timeout)
-  }
+  try { return await fetch(`${OLLAMA_URL}${path}`, { ...init, signal: init.signal ?? controller.signal }) }
+  finally { clearTimeout(timeout) }
 }
 
 async function handleModels(res) {
@@ -60,46 +54,54 @@ async function handleModels(res) {
 async function handleChat(req, res) {
   const body = await readJson(req)
   if (!validateChat(body)) return json(res, 400, { error: 'model and valid messages are required' })
-
   const controller = new AbortController()
   req.on('close', () => controller.abort())
   const upstream = await ollamaFetch('/api/chat', {
-    method: 'POST',
-    signal: controller.signal,
+    method: 'POST', signal: controller.signal,
     headers: { 'Content-Type': 'application/json', Accept: 'application/x-ndjson' },
     body: JSON.stringify({ model: body.model.trim(), messages: body.messages, stream: true }),
   })
-
-  if (!upstream.ok || !upstream.body) {
-    return json(res, 502, { error: 'Ollama chat request failed', upstreamStatus: upstream.status })
-  }
-
-  res.writeHead(200, {
-    'Content-Type': 'application/x-ndjson; charset=utf-8',
-    'Cache-Control': 'no-store',
-    'X-Content-Type-Options': 'nosniff',
-  })
+  if (!upstream.ok || !upstream.body) return json(res, 502, { error: 'Ollama chat request failed', upstreamStatus: upstream.status })
+  res.writeHead(200, { 'Content-Type': 'application/x-ndjson; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' })
   const reader = upstream.body.getReader()
   try {
-    while (true) {
-      const { value, done } = await reader.read()
-      if (done) break
-      res.write(Buffer.from(value))
-    }
-  } finally {
-    reader.releaseLock()
-    res.end()
+    while (true) { const { value, done } = await reader.read(); if (done) break; res.write(Buffer.from(value)) }
+  } finally { reader.releaseLock(); res.end() }
+}
+
+async function handleConversations(req, res, pathname) {
+  if (pathname === '/api/conversations') {
+    if (req.method === 'GET') return json(res, 200, { conversations: await listConversations() })
+    if (req.method === 'POST') return json(res, 201, await createConversation(await readJson(req)))
   }
+  const match = pathname.match(/^\/api\/conversations\/([0-9a-f-]+)$/i)
+  if (!match) return false
+  const id = match[1]
+  if (req.method === 'GET') {
+    const conversation = await getConversation(id)
+    return conversation ? json(res, 200, conversation) : json(res, 404, { error: 'Conversation not found' })
+  }
+  if (req.method === 'PATCH') {
+    const patch = await readJson(req)
+    if (patch.messages !== undefined && !validMessages(patch.messages)) return json(res, 400, { error: 'Invalid messages' })
+    const conversation = await updateConversation(id, patch)
+    return conversation ? json(res, 200, conversation) : json(res, 404, { error: 'Conversation not found' })
+  }
+  if (req.method === 'DELETE') return (await deleteConversation(id)) ? json(res, 200, { deleted: true }) : json(res, 404, { error: 'Conversation not found' })
+  return false
 }
 
 const server = http.createServer(async (req, res) => {
   try {
-    if (req.url === '/api/health' && req.method === 'GET') {
-      return json(res, 200, { status: 'ok', service: 'goreecloud-ai', ollama: OLLAMA_URL })
-    }
+    const url = new URL(req.url ?? '/', 'http://localhost')
+    if (url.pathname === '/api/health' && req.method === 'GET') return json(res, 200, { status: 'ok', service: 'goreecloud-ai', ollama: OLLAMA_URL })
     if (!authorized(req)) return json(res, 401, { error: 'Unauthorized' })
-    if (req.url === '/api/ollama/models' && req.method === 'GET') return await handleModels(res)
-    if (req.url === '/api/ollama/chat' && req.method === 'POST') return await handleChat(req, res)
+    if (url.pathname === '/api/ollama/models' && req.method === 'GET') return await handleModels(res)
+    if (url.pathname === '/api/ollama/chat' && req.method === 'POST') return await handleChat(req, res)
+    if (url.pathname.startsWith('/api/conversations')) {
+      const handled = await handleConversations(req, res, url.pathname)
+      if (handled !== false) return handled
+    }
     json(res, 404, { error: 'Not found' })
   } catch (error) {
     const status = Number(error?.status ?? (error?.name === 'AbortError' ? 504 : 500))
@@ -107,6 +109,4 @@ const server = http.createServer(async (req, res) => {
   }
 })
 
-server.listen(PORT, '127.0.0.1', () => {
-  console.log(`GoreeCloud AI backend listening on http://127.0.0.1:${PORT}`)
-})
+server.listen(PORT, '127.0.0.1', () => console.log(`GoreeCloud AI backend listening on http://127.0.0.1:${PORT}`))
