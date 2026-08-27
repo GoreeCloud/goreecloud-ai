@@ -10,6 +10,12 @@ import { listFiles, uploadFile, type StoredFile } from './lib/files'
 
 const welcome: ChatMessage = { role: 'assistant', content: 'Welcome to GoreeCloud AI. Start a private conversation with a local model.' }
 const stored = (items: ChatMessage[]) => items.filter((message) => message !== welcome)
+const fileTrustLabel: Record<StoredFile['status'], string> = {
+  available: 'Verified',
+  held: 'Held',
+  blocked: 'Blocked',
+  unverified: 'Unverified',
+}
 
 type DialogState =
   | { kind: 'rename'; id: string; value: string }
@@ -43,6 +49,8 @@ export default function App() {
   const currentRole = useMemo(() => roleForModel(selectedModel, models), [selectedModel, models])
   const selectedWorkspace = workspaces.find((workspace) => workspace.id === selectedWorkspaceId)
   const workspaceFiles = files.filter((file) => selectedWorkspaceId ? file.workspaceId === selectedWorkspaceId : file.workspaceId === null)
+  const verifiedWorkspaceFiles = workspaceFiles.filter((file) => file.status === 'available')
+  const restrictedWorkspaceFiles = workspaceFiles.filter((file) => file.status !== 'available')
 
   async function refreshHistory() { try { setHistory(await listConversations()) } catch {} }
   async function refreshWorkspaces() { try { setWorkspaces(await listWorkspaces()) } catch {} }
@@ -232,6 +240,10 @@ export default function App() {
         await saveWorkspace(selectedWorkspace.id, { fileIds: [...new Set([...selectedWorkspace.fileIds, ...uploaded.map((file) => file.id)])] })
         await refreshWorkspaces()
       }
+      const restricted = uploaded.filter((file) => file.status !== 'available')
+      if (restricted.length) {
+        setFileError(`${restricted.length} attachment${restricted.length === 1 ? ' is' : 's are'} staged and unavailable to AI context until Wardveil verification succeeds.`)
+      }
       await refreshFiles()
       setContextOpen(true)
     } catch (error) {
@@ -262,7 +274,7 @@ export default function App() {
         {generationError && <div className="generation-error"><AlertCircle size={18}/><div><strong>Generation interrupted</strong><span>{generationError}</span></div><button onClick={() => void retryGeneration()} disabled={!retryMessages || isGenerating}><RefreshCw size={14}/>Retry</button></div>}
       </div></section>
 
-      <div className="composer-wrap"><form className="composer" onSubmit={submitPrompt}><textarea value={prompt} onChange={(event) => setPrompt(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); event.currentTarget.form?.requestSubmit() } }} placeholder={runtimeState === 'offline' ? 'Retry the local runtime or continue when it reconnects…' : 'Message GoreeCloud AI'} rows={1}/><div className="composer-toolbar"><div className="composer-tools"><input ref={fileInputRef} className="visually-hidden" type="file" multiple onChange={(event) => void attachFiles(event.target.files)}/><button type="button" className="tool-button" onClick={() => fileInputRef.current?.click()} disabled={isUploading} aria-label="Attach file"><Paperclip size={18}/></button><button type="button" className="tool-chip"><Globe2 size={16}/>Research</button></div>{isGenerating ? <button type="button" className="send-button" onClick={stopGeneration} aria-label="Stop generation"><Square size={17} fill="currentColor"/></button> : <button type="submit" className="send-button" disabled={!prompt.trim() || !selectedModel} aria-label="Send message"><Send size={17}/></button>}</div></form><p className="composer-note">{isUploading ? 'Storing attachment locally…' : 'Local by default. External research is disclosed through Privacy Shield.'}</p></div>
+      <div className="composer-wrap"><form className="composer" onSubmit={submitPrompt}><textarea value={prompt} onChange={(event) => setPrompt(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); event.currentTarget.form?.requestSubmit() } }} placeholder={runtimeState === 'offline' ? 'Retry the local runtime or continue when it reconnects…' : 'Message GoreeCloud AI'} rows={1}/><div className="composer-toolbar"><div className="composer-tools"><input ref={fileInputRef} className="visually-hidden" type="file" multiple onChange={(event) => void attachFiles(event.target.files)}/><button type="button" className="tool-button" onClick={() => fileInputRef.current?.click()} disabled={isUploading} aria-label="Attach file"><Paperclip size={18}/></button><button type="button" className="tool-chip"><Globe2 size={16}/>Research</button></div>{isGenerating ? <button type="button" className="send-button" onClick={stopGeneration} aria-label="Stop generation"><Square size={17} fill="currentColor"/></button> : <button type="submit" className="send-button" disabled={!prompt.trim() || !selectedModel} aria-label="Send message"><Send size={17}/></button>}</div></form><p className="composer-note">{isUploading ? 'Staging attachment for Wardveil verification…' : 'Local by default. External research is disclosed through Privacy Shield.'}</p></div>
     </main>
 
     <aside className={`context-panel ${contextOpen ? 'is-open' : ''}`} aria-label="Conversation context"><div className="context-heading"><div><strong>Context</strong><span>Conversation resources</span></div><button className="icon-button" onClick={() => setContextOpen(false)} aria-label="Close context panel"><X size={19}/></button></div>
@@ -270,7 +282,7 @@ export default function App() {
       <div className="context-card"><span className="context-card-icon"><ShieldCheck size={19}/></span><div><strong>Private processing</strong><p>This conversation is configured for the local Ollama runtime.</p></div></div>
       <div className="context-card"><span className="context-card-icon"><GitBranch size={19}/></span><div><strong>Lineage</strong><p>{currentSummary?.parentConversationId ? `Branched from conversation ${currentSummary.parentConversationId.slice(0, 8)} at message ${Number(currentSummary.parentMessageIndex) + 1}.` : 'This is a root conversation.'}</p></div></div>
       <div className="context-card context-card-wide"><span className="context-card-icon"><FileText size={19}/></span><div><strong>Workspace</strong><p>Persistent instructions, files, knowledge, model role, tools, and research preferences.</p><select className="context-select" value={selectedWorkspaceId ?? ''} onChange={(event) => void changeWorkspace(event.target.value)}><option value="">No Workspace</option>{workspaces.map((workspace) => <option key={workspace.id} value={workspace.id}>{workspace.name}</option>)}</select><button className="context-action" onClick={() => setDialog({ kind: 'workspace', value: '' })}><FolderPlus size={15}/>New Workspace</button></div></div>
-      <div className="context-card context-card-wide"><span className="context-card-icon"><Paperclip size={19}/></span><div><strong>{selectedWorkspace ? 'Workspace files' : 'Unassigned files'}</strong><p>{fileError || (workspaceFiles.length ? `${workspaceFiles.length} locally stored attachment${workspaceFiles.length === 1 ? '' : 's'}.` : 'No files stored here yet.')}</p>{workspaceFiles.slice(0, 5).map((file) => <span className="file-chip" key={file.id}>{file.name}</span>)}</div></div>
+      <div className="context-card context-card-wide"><span className="context-card-icon"><Paperclip size={19}/></span><div><strong>{selectedWorkspace ? 'Workspace files' : 'Unassigned files'}</strong><p>{fileError || (workspaceFiles.length ? `${verifiedWorkspaceFiles.length} verified · ${restrictedWorkspaceFiles.length} restricted. Only Wardveil-clean attachments may become available to AI context.` : 'No files stored here yet.')}</p>{workspaceFiles.slice(0, 5).map((file) => <span className={`file-chip ${file.status}`} key={file.id}><span>{file.name}</span><em>{fileTrustLabel[file.status]}</em></span>)}</div></div>
     </aside>
 
     <TextDialog open={dialog?.kind === 'rename'} title="Rename conversation" label="Choose a concise name for this conversation." initialValue={dialog?.kind === 'rename' ? dialog.value : ''} onCancel={() => setDialog(null)} onConfirm={confirmDialog}/>
