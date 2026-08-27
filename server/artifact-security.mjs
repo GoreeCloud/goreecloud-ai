@@ -157,7 +157,7 @@ export async function finalizeArtifact({ artifact, stagedPath, finalPath, scanne
   }
 
   try {
-    await mkdir(dirname(finalPath), { recursive: true })
+    await mkdir(dirname(finalPath), { recursive: true, mode: 0o700 })
     await rename(stagedPath, finalPath)
   } catch {
     return { decision: blocked('artifact_release_failed'), releasedPath: null, stagedPathRetained: await exists(stagedPath), digestSha256: beforeDigest }
