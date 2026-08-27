@@ -1,0 +1,50 @@
+{
+  "contract_version": "0.1.0",
+  "consumer": "GoreeCloud AI",
+  "integration": "Wardveil Scan artifact intake consumer",
+  "wardveil_runtime_contract_version": "0.1.0",
+  "resource_type": "ai_artifact",
+  "artifact_kinds": [
+    "chat_upload",
+    "knowledge_document",
+    "imported_asset",
+    "model_artifact",
+    "tool_artifact",
+    "generated_file"
+  ],
+  "direct_clamav_access_allowed": false,
+  "requirements": {
+    "private_staging_before_release": true,
+    "sha256_digest_binding": true,
+    "authoritative_scan_record_required": true,
+    "clean_requires_current_unexpired_evidence": true,
+    "clean_requires_evidence_refs": true,
+    "rehash_staging_after_clean_before_release": true,
+    "unknown_and_unsupported_fail_closed": true,
+    "scanner_unavailable_fails_closed": true,
+    "malicious_bound_digest_remains_blocking_after_evidence_expiry": true
+  },
+  "result_mapping": {
+    "clean": "release only after all binding, authority, evidence, freshness, and post-scan rehash checks pass",
+    "suspicious": "hold for review and do not release",
+    "malicious": "block and request Wardveil Quarantine handoff",
+    "unknown": "block as unverified",
+    "unsupported": "block as unverified"
+  },
+  "authority_boundaries": {
+    "clean_scan_authorizes_active_execution": false,
+    "model_loading_requires_separate_runtime_policy": true,
+    "tool_execution_requires_separate_runtime_policy": true,
+    "quarantine_requires_explicit_executor_authority": true,
+    "quarantine_is_deletion": false,
+    "ai_consumer_executes_quarantine_directly": false
+  },
+  "privacy": {
+    "raw_artifact_content_required_in_shared_security_records": false,
+    "source_url_required_in_shared_security_records": false,
+    "user_facing_filename_required_in_shared_security_records": false,
+    "credentials_or_session_tokens_allowed_in_shared_security_records": false,
+    "data_minimization_required": true
+  },
+  "production_runtime_status": "unaccepted"
+}
