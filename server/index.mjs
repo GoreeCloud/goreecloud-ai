@@ -1,18 +1,28 @@
 import http from 'node:http'
 import { createConversation, deleteConversation, getConversation, listConversations, updateConversation } from './conversations.mjs'
-import { createWorkspace, deleteWorkspace, getWorkspace, listWorkspaces, updateWorkspace } from './workspaces.mjs'
-import { deleteFile, getFileRecord, listFiles, storeFile } from './files.mjs'
+import { createWorkspace, deleteWorkspace, detachFileFromWorkspaces, getWorkspace, listWorkspaces, updateWorkspace } from './workspaces.mjs'
+import { deleteFile, getFileRecord, getFileStorageUsage, listFiles, storeFile } from './files.mjs'
 
-const PORT = Number(process.env.PORT ?? 8787)
+const PORT = positiveNumberEnv('PORT', 8787)
 const OLLAMA_URL = (process.env.OLLAMA_URL ?? 'http://127.0.0.1:11434').replace(/\/$/, '')
 const API_TOKEN = process.env.GOREECLOUD_AI_API_TOKEN?.trim()
-const MAX_BODY_BYTES = Number(process.env.MAX_BODY_BYTES ?? 1_000_000)
-const MAX_FILE_BYTES = Number(process.env.MAX_FILE_BYTES ?? 25 * 1024 * 1024)
-const REQUEST_TIMEOUT_MS = Number(process.env.REQUEST_TIMEOUT_MS ?? 120_000)
+const MAX_BODY_BYTES = positiveNumberEnv('MAX_BODY_BYTES', 1_000_000)
+const MAX_FILE_BYTES = positiveNumberEnv('MAX_FILE_BYTES', 25 * 1024 * 1024)
+const MAX_FILE_COUNT = positiveNumberEnv('MAX_FILE_COUNT', 1_000)
+const MAX_TOTAL_FILE_BYTES = positiveNumberEnv('MAX_TOTAL_FILE_BYTES', 1024 * 1024 * 1024)
+const REQUEST_TIMEOUT_MS = positiveNumberEnv('REQUEST_TIMEOUT_MS', 120_000)
 
 // A deployed Wardveil transport adapter is intentionally not fabricated here.
 // Until one is configured, attachment intake remains private, staged, and fail-closed.
 const ARTIFACT_SCANNER = null
+
+function positiveNumberEnv(name, fallback) {
+  const raw = process.env[name]
+  if (!raw) return fallback
+  const value = Number(raw)
+  if (!Number.isSafeInteger(value) || value <= 0) throw new Error(`${name} must be a positive integer`)
+  return value
+}
 
 function json(res, status, payload) {
   res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' })
@@ -120,9 +130,23 @@ async function handleWorkspaces(req, res, pathname) {
 
 async function handleFiles(req, res, pathname) {
   if (pathname === '/api/files') {
-    if (req.method === 'GET') return json(res, 200, { files: await listFiles() })
+    if (req.method === 'GET') {
+      const [files, usage] = await Promise.all([listFiles(), getFileStorageUsage()])
+      return json(res, 200, {
+        files,
+        storage: {
+          ...usage,
+          maxFileBytes: MAX_FILE_BYTES,
+          maxFileCount: MAX_FILE_COUNT,
+          maxTotalBytes: MAX_TOTAL_FILE_BYTES,
+        },
+      })
+    }
     if (req.method === 'POST') {
-      const file = await storeFile(req, MAX_FILE_BYTES, ARTIFACT_SCANNER)
+      const file = await storeFile(req, MAX_FILE_BYTES, ARTIFACT_SCANNER, {
+        maxFileCount: MAX_FILE_COUNT,
+        maxTotalBytes: MAX_TOTAL_FILE_BYTES,
+      })
       return json(res, file.status === 'available' ? 201 : 202, file)
     }
   }
@@ -133,7 +157,12 @@ async function handleFiles(req, res, pathname) {
     const record = await getFileRecord(id)
     return record ? json(res, 200, record) : json(res, 404, { error: 'File not found' })
   }
-  if (req.method === 'DELETE') return (await deleteFile(id)) ? json(res, 200, { deleted: true }) : json(res, 404, { error: 'File not found' })
+  if (req.method === 'DELETE') {
+    const deleted = await deleteFile(id)
+    if (!deleted) return json(res, 404, { error: 'File not found' })
+    const workspaceReferencesRemoved = await detachFileFromWorkspaces(id)
+    return json(res, 200, { deleted: true, workspaceReferencesRemoved })
+  }
   return false
 }
 
