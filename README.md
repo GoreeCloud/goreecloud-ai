@@ -48,12 +48,14 @@ The repository now contains the first executable product foundation:
 - Generation interruption recovery with retry state and preservation of the last valid conversation state.
 - Native Workspace persistence/API foundation for instructions, default model role, file references, knowledge collections, tools, and research preference state.
 - Workspace selection in the conversation context panel with default-role model selection when a matching runtime model is available.
-- Native attachment storage/API foundation with streamed local file writes, metadata records, per-file size limits, restrictive permissions, and Workspace association.
-- Browser attachment selection and upload flow with local-storage status presentation.
-- Source-level Wardveil artifact-intake contract and fail-closed reference gate for digest-bound file security decisions.
+- Native attachment intake with streamed private staging, SHA-256 identity, restrictive permissions, metadata records, per-file size limits, and Workspace association.
+- Node-native Wardveil artifact trust gate enforcing digest binding, authoritative/current clean evidence, post-scan re-hashing, fail-closed unavailable/unknown handling, and non-destructive quarantine handoff state.
+- Glaze UI attachment trust presentation for verified, unverified, held, and blocked files.
+- Browser attachment selection and upload flow that does not present successful staging as trust acceptance.
+- Independent Python Wardveil artifact-intake reference contract and validation suite.
 - Repository-local candidate icon and logo artwork with an explicit visual-identity approval gate.
 
-GoreeCloud Identity sessions, attachment-to-Wardveil runtime transport, file ingestion/parsing, embeddings, indexing, retrieval/RAG, GoreeCloud Search, production Wardveil acceptance, Privacy Shield evidence, Everkeep state, Mesh contracts, and production database migration remain to be implemented.
+GoreeCloud Identity sessions, deployed authenticated attachment-to-Wardveil scanner transport, file ingestion/parsing, embeddings, indexing, retrieval/RAG, GoreeCloud Search, production Wardveil acceptance, Privacy Shield evidence, Everkeep state, Mesh contracts, and production database migration remain to be implemented.
 
 ## Architecture
 
@@ -68,10 +70,11 @@ GoreeCloud AI backend
         +-- GoreeCloud Identity authentication/session boundary [planned]
         +-- conversation persistence                           [foundation]
         +-- Workspace persistence                              [foundation]
-        +-- file storage and metadata                          [foundation]
+        +-- file private staging + trust state                 [foundation]
+        +-- Wardveil artifact runtime gate                     [source foundation]
+        +-- authenticated Wardveil scanner transport           [planned]
         +-- knowledge ingestion / RAG                          [planned]
         +-- Privacy Shield processing disclosure/evidence      [planned]
-        +-- Wardveil artifact security contract/reference      [source foundation]
         +-- Everkeep export/recovery state                     [planned]
         +-- GoreeCloud Search research                         [planned]
         +-- GoreeCloud Mesh integration                        [planned]
@@ -124,21 +127,23 @@ DELETE /api/files/:id
 
 The current conversation and Workspace APIs use repository-independent JSON persistence adapters under `GOREECLOUD_AI_DATA_DIR`. This is an early native persistence boundary, not the final multi-user database design. Attachment bytes are stored separately from their metadata and are not committed to source control.
 
-`POST /api/files` currently accepts one raw file body with `X-File-Name` and optional `X-Workspace-Id` headers. This remains a development attachment contract. Successful storage does not mean an attachment is trusted, parsed, indexed, or RAG-ready.
+`POST /api/files` accepts one raw file body with `X-File-Name` and optional `X-Workspace-Id` headers. Bytes are written to private staging before any trust transition. A verified clean release returns `201`; an attachment that remains staged because it is unverified, held, or blocked returns `202` with explicit security state. The current development server deliberately has no fabricated Wardveil scanner transport, so default uploads remain `unverified` and staged instead of being treated as usable files.
+
+Successful staging does not mean an attachment is trusted, parsed, indexed, or RAG-ready.
 
 ## Wardveil artifact security source boundary
 
-The repository contains a source-level fail-closed artifact-intake contract for chat uploads, knowledge documents, imported assets, model artifacts, tool artifacts, and generated files. The required release flow is:
+The repository contains a fail-closed artifact-intake contract for chat uploads, knowledge documents, imported assets, model artifacts, tool artifacts, and generated files. The required release flow is:
 
 ```text
 untrusted artifact -> private AI staging -> SHA-256 binding -> Wardveil Scan -> evidence validation -> post-scan re-hash -> AI release boundary
 ```
 
-A clean result is accepted only when current authoritative Wardveil evidence is bound to the exact GoreeCloud AI resource identity and SHA-256 digest and contains evidence references. Suspicious content is held, malicious content remains blocked with a non-destructive quarantine handoff request, and unknown, unsupported, expired-clean, malformed, mismatched, non-authoritative, or scanner-unavailable evidence fails closed. A clean malware result does not authorize model loading, tool execution, generated code execution, unsafe deserialization, or any other active use.
+`server/artifact-security.mjs` enforces this boundary for native attachment storage while `reference/ai_artifact_security.py` provides an independent reference implementation. A clean result is accepted only when current authoritative Wardveil evidence is bound to the exact GoreeCloud AI resource identity and SHA-256 digest and contains evidence references. Suspicious content is held, malicious content remains blocked with a non-destructive quarantine handoff request, and unknown, unsupported, expired-clean, malformed, mismatched, non-authoritative, or scanner-unavailable evidence fails closed. A clean malware result does not authorize model loading, tool execution, generated code execution, unsafe deserialization, or any other active use.
 
 GoreeCloud AI does not connect directly to ClamAV. ClamAV remains replaceable scanner infrastructure behind Wardveil Security. See `docs/WARDVEIL_ARTIFACT_SECURITY.md` and `contracts/wardveil.ai-artifact-scan.json`.
 
-This is source integration, not production malware-protection acceptance. Deployed authenticated AI-to-Wardveil transport, scanner/signature health, real application adapters, quarantine execution, Glaze UI trust states, Privacy Shield acceptance, and target-environment tests remain required.
+This is source integration, not production malware-protection acceptance. Deployed authenticated AI-to-Wardveil transport, live scanner/signature health, quarantine execution, complete recovery UX, Privacy Shield acceptance, and target-environment tests remain required.
 
 ## Local development
 
@@ -165,7 +170,7 @@ The backend binds to loopback by default. Production publication and reverse-pro
 | `PORT` | `8787` | Local GoreeCloud AI backend port. |
 | `OLLAMA_URL` | `http://127.0.0.1:11434` | Ollama runtime address visible to the backend. |
 | `GOREECLOUD_AI_API_TOKEN` | unset | Optional early-development bearer token; not the final GoreeCloud Identity design. |
-| `GOREECLOUD_AI_DATA_DIR` | `./data` | Local development persistence and attachment directory. |
+| `GOREECLOUD_AI_DATA_DIR` | `./data` | Local development persistence, private staging, and released-attachment directory. |
 | `MAX_BODY_BYTES` | `1000000` | Maximum accepted JSON request body size. |
 | `MAX_FILE_BYTES` | `26214400` | Maximum accepted attachment size in bytes for the current development endpoint. |
 | `REQUEST_TIMEOUT_MS` | `120000` | Upstream request timeout. |
@@ -177,10 +182,13 @@ Do not commit `.env`, `data/`, or reusable credentials.
 ```bash
 npm run check
 npm run check:server
+npm run test:server
 npm run build
 python3 scripts/test_ai_artifact_security.py
 python3 scripts/validate_wardveil_ai_integration.py
 ```
+
+The native server tests cover clean release, scanner-unavailable fail-closed behavior, malicious quarantine handoff state, expired clean evidence, post-scan mutation detection, private storage permissions, and the native file-storage trust transition.
 
 Successful source checks do not by themselves establish production readiness, security acceptance, Stable qualification, safe file-ingestion behavior, or correct behavior against a live Ollama or Wardveil runtime.
 
@@ -192,10 +200,10 @@ See `docs/visual-identity.md` for the concept, asset ownership, cross-platform c
 
 ## Development roadmap
 
-1. Connect native attachment staging to the Wardveil artifact-intake contract with explicit scanning/held/blocked/release state.
+1. Implement the authenticated GoreeCloud AI-to-Wardveil scanner transport and target-environment clean/malicious/unavailable validation without bypassing the native trust gate.
 2. Complete backend hardening and GoreeCloud Identity-backed authenticated sessions.
 3. Add richer Ollama runtime capability metadata such as context, multimodal/embedding compatibility, loaded state, and validated resource information where the runtime safely exposes it.
-4. Implement native file ingestion, extraction, normalization, chunking, and provenance metadata.
+4. Implement native file ingestion, extraction, normalization, chunking, and provenance metadata only for artifacts permitted by trust and permission state.
 5. Implement embeddings, indexing, retrieval, citations, and native RAG with Workspace and permission filtering.
 6. Integrate GoreeCloud Search for current-information research and source citations.
 7. Add tool and agent execution boundaries governed by Wardveil Security.
@@ -207,7 +215,7 @@ See `docs/visual-identity.md` for the concept, asset ownership, cross-platform c
 
 ## Security and privacy direction
 
-The current backend is intentionally narrow. It validates chat payload shape, limits JSON and attachment request size, isolates upstream failures, supports cancellation, applies timeouts, avoids cacheable API responses, and writes development conversation, Workspace, file metadata, and attachment state with restrictive local permissions. The Wardveil source contract and reference gate define the required trust transition but are not yet connected to the native upload storage path in this merged baseline.
+The current backend is intentionally narrow. It validates chat payload shape, limits JSON and attachment request size, isolates upstream failures, supports cancellation, applies timeouts, avoids cacheable API responses, and writes development conversation, Workspace, file metadata, private staging, and released attachment state with restrictive local permissions. The Wardveil source contract and Node runtime gate now govern the native upload trust transition. With no deployed scanner transport configured, the development server fails closed and keeps uploads staged and unavailable to AI context.
 
 The intended production design will replace temporary direct-token handling with GoreeCloud Identity-backed sessions and attach evidence-backed Wardveil Security, Privacy Shield, Everkeep, and Mesh state to relevant runtime operations. Stored attachments require explicit trust, validation, ingestion, indexing, retention, and deletion behavior before production use.
 
