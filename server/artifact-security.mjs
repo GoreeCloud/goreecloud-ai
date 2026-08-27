@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto'
 import { createReadStream } from 'node:fs'
 import { mkdir, rename, stat } from 'node:fs/promises'
+import { dirname } from 'node:path'
 
 export const WARDVEIL_RUNTIME_CONTRACT_VERSION = '0.1.0'
 export const EXPECTED_RESOURCE_TYPE = 'ai_artifact'
@@ -156,12 +157,6 @@ export async function finalizeArtifact({ artifact, stagedPath, finalPath, scanne
   }
 
   try {
-    await mkdir(new URL('.', `file://${finalPath}`).pathname, { recursive: true })
-  } catch {
-    // Directory creation is handled more portably below when finalPath is a filesystem path.
-  }
-  try {
-    const { dirname } = await import('node:path')
     await mkdir(dirname(finalPath), { recursive: true })
     await rename(stagedPath, finalPath)
   } catch {
