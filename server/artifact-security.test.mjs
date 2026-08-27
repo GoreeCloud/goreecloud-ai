@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { Readable } from 'node:stream'
-import { mkdtemp, readFile, rm, stat, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, readFile, rm, stat, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { after, before, test } from 'node:test'
@@ -63,6 +63,7 @@ test('releases only current authoritative clean evidence and allows safe context
   try {
     const staged = path.join(dir, 'staging', 'upload')
     const released = path.join(dir, 'files', 'upload')
+    await mkdir(path.dirname(staged), { recursive: true, mode: 0o700 })
     await writeFile(staged, 'clean')
     const result = await finalizeArtifact({ artifact: artifact(), stagedPath: staged, finalPath: released, scanner: new FakeScanner(), now: NOW })
     assert.equal(result.decision.disposition, 'allow')
@@ -101,6 +102,7 @@ test('missing scanner and changed bytes retain private staging', async () => {
     try {
       const staged = path.join(dir, 'staging', 'upload')
       const released = path.join(dir, 'files', 'upload')
+      await mkdir(path.dirname(staged), { recursive: true, mode: 0o700 })
       await writeFile(staged, 'payload')
       const result = await finalizeArtifact({ artifact: artifact(), stagedPath: staged, finalPath: released, scanner, now: NOW })
       assert.equal(result.decision.releaseAllowed, false)
