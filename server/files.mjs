@@ -2,9 +2,11 @@ import { mkdir, readFile, rename, writeFile, unlink } from 'node:fs/promises'
 import { createWriteStream } from 'node:fs'
 import path from 'node:path'
 import { randomUUID } from 'node:crypto'
+import { artifactResourceId, finalizeArtifact, quarantineHandoff } from './artifact-security.mjs'
 
 const DATA_DIR = process.env.GOREECLOUD_AI_DATA_DIR ?? path.resolve('data')
 const FILE_DIR = path.join(DATA_DIR, 'files')
+const STAGING_DIR = path.join(DATA_DIR, 'staging', 'files')
 const INDEX_PATH = path.join(DATA_DIR, 'files.json')
 
 async function loadIndex() {
@@ -18,9 +20,9 @@ async function loadIndex() {
 }
 
 async function saveIndex(files) {
-  await mkdir(DATA_DIR, { recursive: true })
+  await mkdir(DATA_DIR, { recursive: true, mode: 0o700 })
   const temp = `${INDEX_PATH}.tmp`
-  await writeFile(temp, JSON.stringify({ version: 1, files }, null, 2), { mode: 0o600 })
+  await writeFile(temp, JSON.stringify({ version: 2, files }, null, 2), { mode: 0o600 })
   await rename(temp, INDEX_PATH)
 }
 
@@ -32,14 +34,18 @@ export async function getFileRecord(id) {
   return (await loadIndex()).find((file) => file.id === id) ?? null
 }
 
-export async function storeFile(req, maxBytes) {
+export async function storeFile(req, maxBytes, scanner = null) {
   const id = randomUUID()
   const name = decodeURIComponent(String(req.headers['x-file-name'] ?? 'attachment')).replace(/[\\/\0]/g, '_').slice(0, 240) || 'attachment'
   const mediaType = String(req.headers['content-type'] ?? 'application/octet-stream').slice(0, 160)
   const workspaceId = typeof req.headers['x-workspace-id'] === 'string' ? req.headers['x-workspace-id'] : null
-  await mkdir(FILE_DIR, { recursive: true })
-  const storagePath = path.join(FILE_DIR, id)
-  const stream = createWriteStream(storagePath, { flags: 'wx', mode: 0o600 })
+  const contextId = workspaceId ? `workspace:${workspaceId}` : 'unassigned'
+  const artifact = { contextId, artifactId: id, artifactKind: 'chat_upload', mediaType }
+
+  await mkdir(STAGING_DIR, { recursive: true, mode: 0o700 })
+  const stagedPath = path.join(STAGING_DIR, id)
+  const finalPath = path.join(FILE_DIR, id)
+  const stream = createWriteStream(stagedPath, { flags: 'wx', mode: 0o600 })
   let size = 0
 
   try {
@@ -51,11 +57,40 @@ export async function storeFile(req, maxBytes) {
     await new Promise((resolve, reject) => stream.end((error) => error ? reject(error) : resolve()))
   } catch (error) {
     stream.destroy()
-    await unlink(storagePath).catch(() => {})
+    await unlink(stagedPath).catch(() => {})
     throw error
   }
 
-  const record = { id, name, mediaType, size, workspaceId, status: 'stored', createdAt: new Date().toISOString() }
+  const release = await finalizeArtifact({ artifact, stagedPath, finalPath, scanner })
+  const status = release.decision.releaseAllowed
+    ? 'available'
+    : release.decision.disposition === 'hold_review'
+      ? 'held'
+      : release.decision.disposition === 'block_quarantine'
+        ? 'blocked'
+        : 'unverified'
+  const record = {
+    id,
+    name,
+    mediaType,
+    size,
+    workspaceId,
+    status,
+    storageState: release.releasedPath ? 'released' : 'staged',
+    resourceId: artifactResourceId(artifact),
+    digestSha256: release.digestSha256,
+    security: {
+      disposition: release.decision.disposition,
+      releaseAllowed: release.decision.releaseAllowed,
+      useAsContextAllowed: release.decision.useAsContextAllowed,
+      quarantineRequired: release.decision.quarantineRequired,
+      reasonCodes: release.decision.reasonCodes,
+      evidenceRefs: release.decision.evidenceRefs,
+      scanRecordId: release.decision.scanRecordId,
+      quarantineHandoff: quarantineHandoff(artifact, release.decision),
+    },
+    createdAt: new Date().toISOString(),
+  }
   const files = await loadIndex()
   files.push(record)
   await saveIndex(files)
@@ -66,7 +101,9 @@ export async function deleteFile(id) {
   const files = await loadIndex()
   const record = files.find((file) => file.id === id)
   if (!record) return false
-  await unlink(path.join(FILE_DIR, id)).catch((error) => { if (error?.code !== 'ENOENT') throw error })
+  for (const candidate of [path.join(FILE_DIR, id), path.join(STAGING_DIR, id)]) {
+    await unlink(candidate).catch((error) => { if (error?.code !== 'ENOENT') throw error })
+  }
   await saveIndex(files.filter((file) => file.id !== id))
   return true
 }
