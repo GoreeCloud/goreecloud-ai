@@ -18,7 +18,7 @@ async function load() {
 }
 
 async function save(workspaces) {
-  await mkdir(DATA_DIR, { recursive: true })
+  await mkdir(DATA_DIR, { recursive: true, mode: 0o700 })
   const temp = `${STORE_PATH}.tmp`
   await writeFile(temp, JSON.stringify({ version: 1, workspaces }, null, 2), { mode: 0o600 })
   await rename(temp, STORE_PATH)
@@ -62,14 +62,32 @@ export async function updateWorkspace(id, patch = {}) {
     ...(typeof patch.name === 'string' ? { name: patch.name.trim().slice(0, 120) || current.name } : {}),
     ...(typeof patch.instructions === 'string' ? { instructions: patch.instructions.slice(0, 20_000) } : {}),
     ...(typeof patch.defaultModelRole === 'string' ? { defaultModelRole: patch.defaultModelRole } : {}),
-    ...(Array.isArray(patch.fileIds) ? { fileIds: patch.fileIds.filter((value) => typeof value === 'string') } : {}),
-    ...(Array.isArray(patch.knowledgeCollectionIds) ? { knowledgeCollectionIds: patch.knowledgeCollectionIds.filter((value) => typeof value === 'string') } : {}),
-    ...(Array.isArray(patch.toolIds) ? { toolIds: patch.toolIds.filter((value) => typeof value === 'string') } : {}),
+    ...(Array.isArray(patch.fileIds) ? { fileIds: [...new Set(patch.fileIds.filter((value) => typeof value === 'string'))] } : {}),
+    ...(Array.isArray(patch.knowledgeCollectionIds) ? { knowledgeCollectionIds: [...new Set(patch.knowledgeCollectionIds.filter((value) => typeof value === 'string'))] } : {}),
+    ...(Array.isArray(patch.toolIds) ? { toolIds: [...new Set(patch.toolIds.filter((value) => typeof value === 'string'))] } : {}),
     ...(typeof patch.researchEnabled === 'boolean' ? { researchEnabled: patch.researchEnabled } : {}),
     updatedAt: now(),
   }
   await save(workspaces)
   return workspaces[index]
+}
+
+export async function detachFileFromWorkspaces(fileId) {
+  if (typeof fileId !== 'string' || !fileId) return 0
+  const workspaces = await load()
+  let changed = 0
+  const timestamp = now()
+  const next = workspaces.map((workspace) => {
+    if (!Array.isArray(workspace.fileIds) || !workspace.fileIds.includes(fileId)) return workspace
+    changed += 1
+    return {
+      ...workspace,
+      fileIds: workspace.fileIds.filter((id) => id !== fileId),
+      updatedAt: timestamp,
+    }
+  })
+  if (changed) await save(next)
+  return changed
 }
 
 export async function deleteWorkspace(id) {
