@@ -117,11 +117,19 @@ test('missing scanner and changed bytes retain private staging', async () => {
 
 let dataDir
 let storeFile
+let deleteFile
+let getFileStorageUsage
+let listFiles
+let createWorkspace
+let updateWorkspace
+let getWorkspace
+let detachFileFromWorkspaces
 
 before(async () => {
   dataDir = await mkdtemp(path.join(os.tmpdir(), 'goreecloud-ai-files-'))
   process.env.GOREECLOUD_AI_DATA_DIR = dataDir
-  ;({ storeFile } = await import(`./files.mjs?test=${Date.now()}`))
+  ;({ storeFile, deleteFile, getFileStorageUsage, listFiles } = await import(`./files.mjs?test=${Date.now()}`))
+  ;({ createWorkspace, updateWorkspace, getWorkspace, detachFileFromWorkspaces } = await import(`./workspaces.mjs?test=${Date.now()}`))
 })
 
 after(async () => {
@@ -134,6 +142,7 @@ function uploadRequest(bytes, headers = {}) {
   request.headers = {
     'x-file-name': encodeURIComponent('report.txt'),
     'content-type': 'text/plain',
+    'content-length': String(Buffer.byteLength(bytes)),
     ...headers,
   }
   return request
@@ -177,5 +186,35 @@ test('native upload storage releases bytes only after a clean Wardveil decision'
   assert.equal(record.security.releaseAllowed, true)
   assert.equal(record.security.useAsContextAllowed, true)
   assert.equal((await readFile(path.join(dataDir, 'files', record.id), 'utf8')), 'verified')
+  await assert.rejects(() => stat(path.join(dataDir, 'staging', 'files', record.id)), { code: 'ENOENT' })
+})
+
+test('attachment quotas fail before creating additional stored state', async () => {
+  const before = await getFileStorageUsage()
+  await assert.rejects(
+    () => storeFile(uploadRequest('count-blocked'), 1024, null, { maxFileCount: before.fileCount, maxTotalBytes: before.totalBytes + 1024 }),
+    (error) => error?.status === 507 && /file-count quota/.test(error.message),
+  )
+  assert.deepEqual(await getFileStorageUsage(), before)
+
+  await assert.rejects(
+    () => storeFile(uploadRequest('bytes-blocked'), 1024, null, { maxFileCount: before.fileCount + 10, maxTotalBytes: before.totalBytes + 2 }),
+    (error) => error?.status === 507 && /storage-byte quota/.test(error.message),
+  )
+  assert.deepEqual(await getFileStorageUsage(), before)
+})
+
+test('file deletion can reconcile Workspace file references', async () => {
+  const [record] = await listFiles()
+  assert.ok(record)
+  const workspace = await createWorkspace({ name: 'Files' })
+  await updateWorkspace(workspace.id, { fileIds: [record.id, record.id] })
+  assert.deepEqual((await getWorkspace(workspace.id)).fileIds, [record.id])
+
+  assert.equal(await deleteFile(record.id), true)
+  assert.equal(await detachFileFromWorkspaces(record.id), 1)
+  assert.deepEqual((await getWorkspace(workspace.id)).fileIds, [])
+  assert.equal((await listFiles()).some((file) => file.id === record.id), false)
+  await assert.rejects(() => stat(path.join(dataDir, 'files', record.id)), { code: 'ENOENT' })
   await assert.rejects(() => stat(path.join(dataDir, 'staging', 'files', record.id)), { code: 'ENOENT' })
 })
