@@ -10,6 +10,10 @@ const MAX_BODY_BYTES = Number(process.env.MAX_BODY_BYTES ?? 1_000_000)
 const MAX_FILE_BYTES = Number(process.env.MAX_FILE_BYTES ?? 25 * 1024 * 1024)
 const REQUEST_TIMEOUT_MS = Number(process.env.REQUEST_TIMEOUT_MS ?? 120_000)
 
+// A deployed Wardveil transport adapter is intentionally not fabricated here.
+// Until one is configured, attachment intake remains private, staged, and fail-closed.
+const ARTIFACT_SCANNER = null
+
 function json(res, status, payload) {
   res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' })
   res.end(JSON.stringify(payload))
@@ -117,7 +121,10 @@ async function handleWorkspaces(req, res, pathname) {
 async function handleFiles(req, res, pathname) {
   if (pathname === '/api/files') {
     if (req.method === 'GET') return json(res, 200, { files: await listFiles() })
-    if (req.method === 'POST') return json(res, 201, await storeFile(req, MAX_FILE_BYTES))
+    if (req.method === 'POST') {
+      const file = await storeFile(req, MAX_FILE_BYTES, ARTIFACT_SCANNER)
+      return json(res, file.status === 'available' ? 201 : 202, file)
+    }
   }
   const match = pathname.match(/^\/api\/files\/([0-9a-f-]+)$/i)
   if (!match) return false
@@ -133,7 +140,7 @@ async function handleFiles(req, res, pathname) {
 const server = http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url ?? '/', 'http://localhost')
-    if (url.pathname === '/api/health' && req.method === 'GET') return json(res, 200, { status: 'ok', service: 'goreecloud-ai', ollama: OLLAMA_URL })
+    if (url.pathname === '/api/health' && req.method === 'GET') return json(res, 200, { status: 'ok', service: 'goreecloud-ai', ollama: OLLAMA_URL, wardveilArtifactScanner: ARTIFACT_SCANNER ? 'configured' : 'unconfigured' })
     if (!authorized(req)) return json(res, 401, { error: 'Unauthorized' })
     if (url.pathname === '/api/ollama/models' && req.method === 'GET') return await handleModels(res)
     if (url.pathname === '/api/ollama/chat' && req.method === 'POST') return await handleChat(req, res)
