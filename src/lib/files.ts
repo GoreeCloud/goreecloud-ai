@@ -1,10 +1,26 @@
+export type FileTrustStatus = 'available' | 'held' | 'blocked' | 'unverified'
+
+export interface FileSecurityState {
+  disposition: string
+  releaseAllowed: boolean
+  useAsContextAllowed: boolean
+  quarantineRequired: boolean
+  reasonCodes: string[]
+  evidenceRefs: string[]
+  scanRecordId: string | null
+}
+
 export interface StoredFile {
   id: string
   name: string
   mediaType: string
   size: number
   workspaceId: string | null
-  status: 'stored'
+  status: FileTrustStatus
+  storageState: 'released' | 'staged'
+  resourceId: string
+  digestSha256: string | null
+  security: FileSecurityState
   createdAt: string
 }
 
