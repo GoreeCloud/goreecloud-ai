@@ -36,14 +36,15 @@ if (!validateModel) {
 
 assert(models.some((model) => model?.name === validateModel || model?.model === validateModel), `VALIDATE_OLLAMA_MODEL is not present in the discovered model set: ${validateModel}`)
 
-await step('Streamed chat through GoreeCloud AI', async () => {
-  const response = await request(`${apiBaseUrl}/api/ollama/chat`, {
+await step('Streamed chat through GoreeCloud AI', async () => withTimeout(async (signal) => {
+  const response = await fetch(`${apiBaseUrl}/api/ollama/chat`, {
     method: 'POST',
     headers: { ...headers, 'Content-Type': 'application/json', Accept: 'application/x-ndjson' },
     body: JSON.stringify({
       model: validateModel,
       messages: [{ role: 'user', content: 'Respond briefly to confirm local runtime validation.' }],
     }),
+    signal,
   })
   assert(response.ok, `${response.status} ${response.statusText} from streamed chat`)
   assert(response.body, 'streamed chat response body is missing')
@@ -80,7 +81,7 @@ await step('Streamed chat through GoreeCloud AI', async () => {
   assert(chunks > 0, 'streamed chat produced no assistant content chunks')
   assert(sawDone, 'streamed chat did not produce a terminal done event')
   return `${chunks} content chunks`
-})
+}))
 
 console.log('\nLive Ollama application-path validation passed.')
 console.log('This validates the configured runtime path only; it does not establish Wardveil, Privacy Shield, Everkeep, Identity, Mesh, or Stable production acceptance.')
@@ -99,17 +100,19 @@ async function step(label, task) {
 }
 
 async function json(url, init = {}) {
-  const response = await request(url, init)
-  const text = await response.text()
-  if (!response.ok) throw new Error(`${response.status} ${response.statusText} from ${url}${text ? `: ${text.slice(0, 500)}` : ''}`)
-  return text ? JSON.parse(text) : null
+  return withTimeout(async (signal) => {
+    const response = await fetch(url, { ...init, signal })
+    const text = await response.text()
+    if (!response.ok) throw new Error(`${response.status} ${response.statusText} from ${url}${text ? `: ${text.slice(0, 500)}` : ''}`)
+    return text ? JSON.parse(text) : null
+  })
 }
 
-async function request(url, init = {}) {
+async function withTimeout(task) {
   const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), timeoutMs)
+  const timeout = setTimeout(() => controller.abort(new Error(`validation request exceeded ${timeoutMs}ms`)), timeoutMs)
   try {
-    return await fetch(url, { ...init, signal: init.signal ?? controller.signal })
+    return await task(controller.signal)
   } finally {
     clearTimeout(timeout)
   }
