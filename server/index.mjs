@@ -2,6 +2,7 @@ import http from 'node:http'
 import { createConversation, deleteConversation, getConversation, listConversations, updateConversation } from './conversations.mjs'
 import { createWorkspace, deleteWorkspace, detachFileFromWorkspaces, getWorkspace, listWorkspaces, updateWorkspace } from './workspaces.mjs'
 import { deleteFile, getFileRecord, getFileStorageUsage, listFiles, storeFile } from './files.mjs'
+import { deleteTextExtraction, extractTextFile, getTextExtraction } from './text-extraction.mjs'
 
 const PORT = positiveNumberEnv('PORT', 8787)
 const OLLAMA_URL = (process.env.OLLAMA_URL ?? 'http://127.0.0.1:11434').replace(/\/$/, '')
@@ -10,6 +11,7 @@ const MAX_BODY_BYTES = positiveNumberEnv('MAX_BODY_BYTES', 1_000_000)
 const MAX_FILE_BYTES = positiveNumberEnv('MAX_FILE_BYTES', 25 * 1024 * 1024)
 const MAX_FILE_COUNT = positiveNumberEnv('MAX_FILE_COUNT', 1_000)
 const MAX_TOTAL_FILE_BYTES = positiveNumberEnv('MAX_TOTAL_FILE_BYTES', 1024 * 1024 * 1024)
+const MAX_TEXT_EXTRACTION_BYTES = positiveNumberEnv('MAX_TEXT_EXTRACTION_BYTES', 2 * 1024 * 1024)
 const REQUEST_TIMEOUT_MS = positiveNumberEnv('REQUEST_TIMEOUT_MS', 120_000)
 
 // A deployed Wardveil transport adapter is intentionally not fabricated here.
@@ -139,6 +141,7 @@ async function handleFiles(req, res, pathname) {
           maxFileBytes: MAX_FILE_BYTES,
           maxFileCount: MAX_FILE_COUNT,
           maxTotalBytes: MAX_TOTAL_FILE_BYTES,
+          maxTextExtractionBytes: MAX_TEXT_EXTRACTION_BYTES,
         },
       })
     }
@@ -150,14 +153,28 @@ async function handleFiles(req, res, pathname) {
       return json(res, file.status === 'available' ? 201 : 202, file)
     }
   }
-  const match = pathname.match(/^\/api\/files\/([0-9a-f-]+)$/i)
+  const match = pathname.match(/^\/api\/files\/([0-9a-f-]+)(?:\/(extraction))?$/i)
   if (!match) return false
   const id = match[1]
+  const resource = match[2]
+
+  if (resource === 'extraction') {
+    if (req.method === 'POST') return json(res, 201, await extractTextFile(id, MAX_TEXT_EXTRACTION_BYTES))
+    if (req.method === 'GET') {
+      const extraction = await getTextExtraction(id)
+      return extraction ? json(res, 200, extraction) : json(res, 404, { error: 'Text extraction not found' })
+    }
+    return false
+  }
+
   if (req.method === 'GET') {
     const record = await getFileRecord(id)
     return record ? json(res, 200, record) : json(res, 404, { error: 'File not found' })
   }
   if (req.method === 'DELETE') {
+    const record = await getFileRecord(id)
+    if (!record) return json(res, 404, { error: 'File not found' })
+    await deleteTextExtraction(id)
     const deleted = await deleteFile(id)
     if (!deleted) return json(res, 404, { error: 'File not found' })
     const workspaceReferencesRemoved = await detachFileFromWorkspaces(id)
@@ -188,7 +205,10 @@ const server = http.createServer(async (req, res) => {
     json(res, 404, { error: 'Not found' })
   } catch (error) {
     const status = Number(error?.status ?? (error?.name === 'AbortError' ? 504 : 500))
-    json(res, status, { error: status === 500 ? 'Internal server error' : error.message })
+    json(res, status, {
+      error: status === 500 ? 'Internal server error' : (error?.code ?? error.message),
+      ...(status !== 500 && error?.code ? { message: error.message } : {}),
+    })
   }
 })
 
