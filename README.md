@@ -10,6 +10,7 @@ Native GoreeCloud-owned AI application for private conversations, Workspaces, kn
 - [Features](FEATURES.md)
 - [Benefits](BENEFITS.md)
 - [Competitive objectives](COMPETITIVE-OBJECTIVES.md)
+- [User manual](USER-MANUAL.md)
 - [Branding authority](BRANDING.md)
 
 ## Product boundary
@@ -43,6 +44,7 @@ The repository includes:
 - Explicit attachment trust states: Verified, Unverified, Held, and Blocked.
 - Passive post-Wardveil text extraction for released UTF-8 text, Markdown, and JSON with source-digest revalidation and private derived records.
 - Independent Python Wardveil artifact-intake reference contract and validation suite.
+- An opt-in live runtime validator for the first-party health/model-discovery path and optional streamed Ollama chat through the GoreeCloud AI backend.
 - Unified GoreeCloud branding authority reference.
 
 The current development server deliberately has no fabricated Wardveil scanner transport. Default uploads therefore remain private/staged and `unverified`; they cannot enter text extraction or AI context.
@@ -201,7 +203,29 @@ python3 scripts/validate_wardveil_ai_integration.py
 
 Native tests cover Wardveil clean release, unavailable scanner behavior, malicious handoff, expired evidence, post-scan mutation, restrictive storage, quotas, deletion/reference cleanup, passive-text extraction eligibility, digest mismatch, invalid UTF-8/JSON, parser allowlist behavior, and extraction cleanup.
 
-Successful source checks do not establish live Ollama/Wardveil interoperability, privacy/security production acceptance, recoverability, or Stable qualification.
+### Live application/runtime validation
+
+Run the first-party runtime validator against an approved test endpoint:
+
+```bash
+GOREECLOUD_AI_URL=http://127.0.0.1:8787 npm run validate:runtime
+```
+
+The base validation requires GoreeCloud AI health and Ollama model discovery through the application backend. If the backend uses the current development direct-API bearer, provide `GOREECLOUD_AI_API_TOKEN` through protected runtime configuration; the validator does not print it.
+
+To exercise one real streamed model request through the backend, explicitly select an installed model:
+
+```bash
+VALIDATE_OLLAMA_MODEL='<installed-model-id>' npm run validate:runtime
+```
+
+The validator requires assistant content chunks plus a terminal `done` event but does not print the generated model response. `VALIDATE_REQUIRE_WARDVEIL_SCANNER=true` can be used only in an environment that is expected to expose an authenticated Wardveil scanner transport; the validator fails if the application reports the scanner as unconfigured instead of manufacturing positive evidence.
+
+`npm run check:server` syntax-checks the runtime validator alongside the server modules.
+
+Successful source checks or runtime validation do not establish Wardveil/Privacy Shield/Everkeep/Identity/Mesh production acceptance, recoverability, exact Glaze UI conformance, deployment readiness, or Stable qualification.
+
+See `USER-MANUAL.md` for the current runtime-validation and trust-boundary usage guidance.
 
 ## Platform-system acceptance
 
@@ -214,18 +238,19 @@ Successful source checks do not establish live Ollama/Wardveil interoperability,
 
 ## Roadmap
 
-1. Implement authenticated GoreeCloud AI-to-Wardveil Scan transport and exact-runtime clean/malicious/unavailable acceptance without bypassing the native trust gate.
-2. Complete GoreeCloud Identity-backed authenticated sessions and production persistence boundaries.
-3. Continue Glaze UI 2.0.0 migration and collect exact consumer conformance evidence.
-4. Add separately reviewed parsers and provenance only for content formats whose security/privacy boundaries are defined.
-5. Implement chunking, embeddings, indexing, retrieval, citations, and native RAG with Workspace/permission filtering and Privacy Shield authorization.
-6. Integrate GoreeCloud Search for current-information research.
-7. Add Wardveil-governed tools and agents.
-8. Implement Privacy Shield processing decisions/evidence and user controls.
-9. Implement Everkeep export, backup, restore, retention, portability, and continuity state.
-10. Connect GoreeCloud Mesh contracts and broader first-party interoperability.
-11. Complete visual-identity approval and synchronized derivatives through the unified branding repository.
-12. Add runtime/interaction tests, deployment, monitoring, and production-readiness evidence.
+1. Execute and record live application-to-Ollama validation in the intended environment using the new bounded runtime validator.
+2. Implement authenticated GoreeCloud AI-to-Wardveil Scan transport and exact-runtime clean/malicious/unavailable acceptance without bypassing the native trust gate.
+3. Complete GoreeCloud Identity-backed authenticated sessions and production persistence boundaries.
+4. Continue Glaze UI 2.0.0 migration and collect exact consumer conformance evidence.
+5. Add separately reviewed parsers and provenance only for content formats whose security/privacy boundaries are defined.
+6. Implement chunking, embeddings, indexing, retrieval, citations, and native RAG with Workspace/permission filtering and Privacy Shield authorization.
+7. Integrate GoreeCloud Search for current-information research.
+8. Add Wardveil-governed tools and agents.
+9. Implement Privacy Shield processing decisions/evidence and user controls.
+10. Implement Everkeep export, backup, restore, retention, portability, and continuity state.
+11. Connect GoreeCloud Mesh contracts and broader first-party interoperability.
+12. Complete visual-identity approval and synchronized derivatives through the unified branding repository.
+13. Add runtime/interaction tests, deployment, monitoring, and production-readiness evidence.
 
 ## Visual identity
 
