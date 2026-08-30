@@ -10,7 +10,7 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "check": "tsc -b --pretty false",
-    "check:server": "node --check server/index.mjs && node --check server/files.mjs && node --check server/artifact-security.mjs",
+    "check:server": "node --check server/index.mjs && node --check server/files.mjs && node --check server/artifact-security.mjs && node --check server/text-extraction.mjs",
     "test:server": "node --test server/*.test.mjs"
   },
   "dependencies": {
