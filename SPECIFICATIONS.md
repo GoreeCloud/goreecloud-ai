@@ -6,7 +6,7 @@ GoreeCloud AI is original GoreeCloud-owned AI application and orchestration soft
 
 ## Current development state
 
-The active Milestone 0 foundation includes a React/TypeScript/Vite client, Node.js backend, Ollama model discovery/streaming chat boundary, conversation persistence, model roles, Workspaces, private attachment storage, Wardveil-gated attachment release, attachment quotas/deletion, and the first passive-text extraction boundary.
+The active Milestone 0 foundation includes a React/TypeScript/Vite client, Node.js backend, Ollama model discovery/streaming chat boundary, conversation persistence, model roles, Workspaces, private attachment storage, Wardveil-gated attachment release, attachment quotas/deletion, the first passive-text extraction boundary, and an opt-in live runtime validator for the application-to-Ollama path.
 
 The default development server intentionally has no fabricated Wardveil scanner transport. Without an authenticated scanner adapter, uploads remain private/staged and `unverified` rather than becoming eligible for extraction or AI context.
 
@@ -27,6 +27,16 @@ UTF-8 decoding is fatal, unsupported control bytes fail closed, JSON must parse,
 
 This source foundation does not authorize PDF/Office/HTML/archive parsing, embeddings, indexing, RAG retrieval, model-context use, tool execution, generated-code execution, or external processing.
 
+## Live runtime-validation contract
+
+`npm run validate:runtime` validates the first-party application path rather than connecting a browser client directly to Ollama. The base run checks GoreeCloud AI service health, reported Wardveil scanner configuration state, and Ollama model discovery through `/api/ollama/models`.
+
+When `VALIDATE_OLLAMA_MODEL` explicitly selects an installed model, the validator sends one bounded chat request through `/api/ollama/chat` and requires streamed assistant content plus a terminal `done` event. Generated response content is not printed by the validator.
+
+If the application test endpoint requires the current development bearer, `GOREECLOUD_AI_API_TOKEN` may be supplied through protected runtime configuration. `VALIDATE_REQUIRE_WARDVEIL_SCANNER=true` is an explicit expectation gate: the validator fails if the application reports the Wardveil artifact scanner as unconfigured rather than converting absence into positive evidence.
+
+A passing run proves only the runtime path exercised. It does not establish GoreeCloud Identity, Wardveil, Privacy Shield, Everkeep, Mesh, exact Glaze UI conformance, deployment, recovery, or Stable production acceptance.
+
 ## Platform-system requirements
 
 - **Glaze UI:** current mandatory consumer target is Glaze UI 2.0.0. Exact-revision GoreeCloud AI conformance remains pending.
@@ -38,7 +48,7 @@ This source foundation does not authorize PDF/Office/HTML/archive parsing, embed
 
 ## Validation
 
-CI validates application TypeScript, server syntax, native server/security/lifecycle tests, production client build, Python Wardveil reference behavior, the AI/Wardveil contract, and Python compilation.
+CI validates application TypeScript, server syntax, native server/security/lifecycle tests, production client build, Python Wardveil reference behavior, the AI/Wardveil contract, Python compilation, and syntax of the opt-in runtime validator. Live Ollama interoperability remains a separate target-environment gate until an approved run is executed and recorded.
 
 ## Stable boundary
 
