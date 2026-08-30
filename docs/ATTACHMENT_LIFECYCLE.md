@@ -1,6 +1,6 @@
 # GoreeCloud AI Attachment Lifecycle
 
-GoreeCloud AI owns the attachment lifecycle around the Wardveil artifact trust boundary. Storage success, security release, ingestion, indexing, context use, retention, and deletion are separate state transitions.
+GoreeCloud AI owns the attachment lifecycle around the Wardveil artifact trust boundary. Storage success, security release, extraction, indexing, context use, retention, and deletion are separate state transitions.
 
 ## Current development flow
 
@@ -13,21 +13,25 @@ upload request
   -> released or retained staged
   -> metadata index
   -> optional Workspace reference
+  -> explicit passive-text extraction eligibility gate
+  -> digest recheck
+  -> private extracted-text record
 ```
 
-The Wardveil rules documented in `WARDVEIL_ARTIFACT_SECURITY.md` remain authoritative for trust release. Quotas never turn unverified content into clean content and deletion never becomes Wardveil Quarantine.
+The Wardveil rules documented in `WARDVEIL_ARTIFACT_SECURITY.md` remain authoritative for trust release. Quotas never turn unverified content into clean content, extraction never upgrades Wardveil state, and deletion never becomes Wardveil Quarantine.
 
 ## Storage limits
 
-The development server enforces three independent limits:
+The development server enforces independent limits for attachment size, file count, aggregate stored bytes, and passive text extraction:
 
 - `MAX_FILE_BYTES` — maximum bytes for one attachment;
 - `MAX_FILE_COUNT` — maximum number of attachment records in the local library;
-- `MAX_TOTAL_FILE_BYTES` — maximum aggregate attachment bytes recorded by the local library.
+- `MAX_TOTAL_FILE_BYTES` — maximum aggregate attachment bytes recorded by the local library; and
+- `MAX_TEXT_EXTRACTION_BYTES` — maximum source bytes permitted through the initial passive-text extraction gate.
 
 The count and aggregate limits are checked before staging when enough request metadata is available and are enforced again while streaming. Quota rejection uses HTTP 507 and removes any partially staged file.
 
-These are local safety limits, not final per-user, per-Workspace, tenant, billing, or retention policy. Production quota policy requires identity-aware storage accounting and shared persistence.
+These are local safety limits, not final per-user, per-Workspace, tenant, billing, privacy, or retention policy. Production quota policy requires identity-aware storage accounting and shared persistence.
 
 ## Mutation serialization
 
@@ -35,19 +39,40 @@ The JSON-file development adapter serializes file-store and file-delete mutation
 
 This is not a distributed lock. Multiple application processes or hosts require a production persistence layer with transactional quota accounting and concurrency control before production acceptance.
 
+## Safe text extraction foundation
+
+`POST /api/files/:id/extraction` is the first bounded post-release content-processing boundary. It is available only when the attachment record is `available`, bytes are in `released` storage, Wardveil release is allowed, and the Wardveil decision explicitly allows context use.
+
+The initial parser allowlist is deliberately narrow:
+
+- `text/plain`;
+- `text/markdown`;
+- `text/x-markdown`; and
+- `application/json`.
+
+PDF, HTML, Office documents, archives, scripts, executables, images, audio, video, models, tools, and other active or parser-complex formats are not accepted by this boundary. They require separately reviewed parsing/sandbox/content-policy controls.
+
+Immediately before extraction, GoreeCloud AI hashes the released bytes again and requires the SHA-256 digest to match the attachment record that was bound to accepted Wardveil evidence. The bytes must then pass fatal UTF-8 decoding and a restrictive control-character check. JSON must parse successfully before normalized text is written.
+
+Extracted content is stored under the application data directory as a private mode-0600 JSON record containing the source resource ID/digest, media type, extracted-text digest, bounded size metadata, state, timestamp, and extracted text. `GET /api/files/:id/extraction` returns the stored extraction only while its source digest remains bound to the current attachment record.
+
+This is extraction only. It does not establish chunking, embeddings, indexing, retrieval, RAG participation, Workspace permission filtering, model-context authorization, provenance display, external processing, or Privacy Shield authorization.
+
 ## Deletion
 
-Deleting an attachment removes both possible byte locations:
+Deleting an attachment first removes any derived text extraction and then removes both possible byte locations:
 
 - released attachment storage; and
 - private Wardveil staging.
 
 After byte/index deletion, the API removes that file ID from persisted Workspace `fileIds` arrays. Workspace reference cleanup is metadata cleanup only; it is not malware quarantine, secure erasure, an Everkeep retention action, or proof that copies do not exist elsewhere.
 
-Everkeep backup/recovery, legal retention, succession, export, and restore semantics remain separate future integrations.
+Everkeep backup/recovery, legal retention, succession, export, and restore semantics remain separate future integrations. The current deletion behavior is not an Everkeep lifecycle-acceptance claim.
 
-## Trust and active-use boundaries
+## Trust, privacy, and active-use boundaries
 
-A released clean attachment may become eligible for safe context-oriented processing only where the Wardveil decision explicitly allows it. Security release does not by itself authorize parsing with unsafe libraries, executing embedded content, loading a model, running code, installing a tool, or publishing data externally.
+A released clean attachment may become eligible for safe context-oriented processing only where the Wardveil decision explicitly allows it. Security release does not itself authorize parsing with unsafe libraries, executing embedded content, loading a model, running code, installing a tool, or publishing data externally.
 
-File ingestion, MIME/content validation, extraction, provenance, chunking, indexing, permission filtering, RAG participation, active-content policy, Privacy Shield evidence, and external-processing disclosure remain separate gates.
+Privacy Shield remains authoritative for whether extracted content may be used for a declared purpose, retained, sent to a model, transferred externally, or included in another processing flow. The current extraction module does not fabricate Privacy Shield authorization.
+
+File provenance, chunking, indexing, permission filtering, RAG participation, active-content policy, Privacy Shield evidence, external-processing disclosure, and Everkeep treatment remain separate gates.
