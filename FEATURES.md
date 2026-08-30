@@ -12,10 +12,13 @@
 - Explicit attachment trust presentation: Verified, Unverified, Held, and Blocked.
 - Passive post-Wardveil text extraction for released UTF-8 text, Markdown, and JSON with source digest revalidation and private extracted-text persistence.
 - Independent Python Wardveil reference contract and validation suite.
+- Opt-in live application/runtime validation for service health, Ollama discovery, and an explicitly selected streamed model request through the GoreeCloud AI backend.
+- Root user manual plus a synchronized central GoreeCloud User Manuals copy.
 - Unified GoreeCloud branding authority reference.
 
 ## Under active development
 
+- Recorded live application-to-Ollama validation against the intended environment.
 - Authenticated GoreeCloud AI-to-Wardveil Scan transport and target-environment clean/malicious/unavailable validation.
 - Glaze UI 2.0.0 consumer migration and exact-revision conformance evidence.
 - GoreeCloud Identity-backed user/session/service authorization and multi-user persistence.
