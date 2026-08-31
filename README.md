@@ -43,6 +43,7 @@ The repository includes:
 - Node-native Wardveil artifact trust gate with exact resource/digest binding, current authoritative clean evidence, post-scan rehashing, fail-closed unavailable/unknown behavior, and non-destructive quarantine handoff state.
 - Explicit attachment trust states: Verified, Unverified, Held, and Blocked.
 - Passive post-Wardveil text extraction for released UTF-8 text, Markdown, and JSON with source-digest revalidation and private derived records.
+- Read-only knowledge-eligibility assessment that makes blocking/pending gates visible without authorizing indexing, retrieval, or model context.
 - Independent Python Wardveil artifact-intake reference contract and validation suite.
 - An opt-in live runtime validator for the first-party health/model-discovery path and optional streamed Ollama chat through the GoreeCloud AI backend.
 - Unified GoreeCloud branding authority reference.
@@ -64,6 +65,7 @@ GoreeCloud AI backend
         +-- Wardveil artifact runtime gate                      [source foundation]
         +-- authenticated Wardveil Scan transport               [planned]
         +-- passive text extraction                             [foundation]
+        +-- knowledge-eligibility observation                   [foundation]
         +-- chunking / embeddings / indexing / RAG              [planned]
         +-- Privacy Shield decisions/evidence                   [planned]
         +-- Everkeep lifecycle/recovery                         [planned]
@@ -112,7 +114,19 @@ PDF, HTML, Office documents, archives, scripts, executables, models, tools, imag
 
 Extraction is not chunking, embedding, indexing, retrieval, RAG eligibility, model-context authorization, Privacy Shield authorization, or external-processing permission.
 
-See `docs/WARDVEIL_ARTIFACT_SECURITY.md` and `docs/ATTACHMENT_LIFECYCLE.md`.
+### Knowledge eligibility observation
+
+`GET /api/files/:id/knowledge-eligibility` reports the current gates that would have to be satisfied before a future knowledge pipeline could use an attachment. It is read-only and does not create derived content or advance the file into another lifecycle stage.
+
+The current response reports Wardveil state, safe-extraction state, GoreeCloud Identity authorization state, Privacy Shield authorization state, and whether indexing, retrieval, and model-context stages exist. Even when Wardveil release and a digest-bound extraction are satisfied, the current source reports:
+
+- `eligibleForIndexing: false`
+- `eligibleForRetrieval: false`
+- `eligibleForModelContext: false`
+
+Identity and Privacy Shield authorization remain pending; indexing, retrieval, and model-context authorization remain disabled/not implemented. This prevents a readiness display from becoming an accidental authorization bypass.
+
+See `docs/WARDVEIL_ARTIFACT_SECURITY.md`, `docs/ATTACHMENT_LIFECYCLE.md`, and `USER-MANUAL.md`.
 
 ## API foundation
 
@@ -139,6 +153,7 @@ GET    /api/files/:id
 DELETE /api/files/:id
 POST   /api/files/:id/extraction
 GET    /api/files/:id/extraction
+GET    /api/files/:id/knowledge-eligibility
 ```
 
 The current JSON/local-file adapters are development persistence boundaries, not the final multi-user database design.
@@ -201,7 +216,7 @@ python3 scripts/test_ai_artifact_security.py
 python3 scripts/validate_wardveil_ai_integration.py
 ```
 
-Native tests cover Wardveil clean release, unavailable scanner behavior, malicious handoff, expired evidence, post-scan mutation, restrictive storage, quotas, deletion/reference cleanup, passive-text extraction eligibility, digest mismatch, invalid UTF-8/JSON, parser allowlist behavior, and extraction cleanup.
+Native tests cover Wardveil clean release, unavailable scanner behavior, malicious handoff, expired evidence, post-scan mutation, restrictive storage, quotas, deletion/reference cleanup, passive-text extraction eligibility, digest mismatch, invalid UTF-8/JSON, parser allowlist behavior, extraction cleanup, and non-authorizing knowledge-eligibility gate behavior.
 
 ### Live application/runtime validation
 
@@ -221,32 +236,30 @@ VALIDATE_OLLAMA_MODEL='<installed-model-id>' npm run validate:runtime
 
 The validator requires assistant content chunks plus a terminal `done` event but does not print the generated model response. `VALIDATE_REQUIRE_WARDVEIL_SCANNER=true` can be used only in an environment that is expected to expose an authenticated Wardveil scanner transport; the validator fails if the application reports the scanner as unconfigured instead of manufacturing positive evidence.
 
-`npm run check:server` syntax-checks the runtime validator alongside the server modules.
+`npm run check:server` syntax-checks the runtime validator and knowledge-eligibility module alongside the server modules.
 
 Successful source checks or runtime validation do not establish Wardveil/Privacy Shield/Everkeep/Identity/Mesh production acceptance, recoverability, exact Glaze UI conformance, deployment readiness, or Stable qualification.
-
-See `USER-MANUAL.md` for the current runtime-validation and trust-boundary usage guidance.
 
 ## Platform-system acceptance
 
 - **Glaze UI:** mandatory target is current Stable Glaze UI 2.0.0; GoreeCloud AI exact-revision consumer acceptance remains pending.
 - **Wardveil Security:** source trust enforcement exists; deployed authenticated Scan transport and AI consumer production acceptance remain pending.
-- **Privacy Shield:** remains authoritative for whether files/extractions/conversations may be used, retained, transferred, sent to models, researched, or externally processed. This source does not fabricate that authorization.
+- **Privacy Shield:** remains authoritative for whether files/extractions/conversations may be used, retained, transferred, sent to models, researched, or externally processed. The knowledge-eligibility surface explicitly leaves this authorization pending.
 - **Everkeep:** attachment/extraction retention, export, backup, restore, recovery, preservation, portability, and succession remain pending application-specific acceptance.
-- **GoreeCloud Identity:** production sessions, service identity, multi-user authorization, and delegated authority remain pending.
+- **GoreeCloud Identity:** production sessions, service identity, multi-user authorization, and delegated authority remain pending. The knowledge-eligibility surface explicitly leaves this authorization pending.
 - **GoreeCloud Mesh:** cross-system capability/evidence coordination remains pending.
 
 ## Roadmap
 
-1. Execute and record live application-to-Ollama validation in the intended environment using the new bounded runtime validator.
+1. Execute and record live application-to-Ollama validation in the intended environment using the bounded runtime validator.
 2. Implement authenticated GoreeCloud AI-to-Wardveil Scan transport and exact-runtime clean/malicious/unavailable acceptance without bypassing the native trust gate.
 3. Complete GoreeCloud Identity-backed authenticated sessions and production persistence boundaries.
 4. Continue Glaze UI 2.0.0 migration and collect exact consumer conformance evidence.
 5. Add separately reviewed parsers and provenance only for content formats whose security/privacy boundaries are defined.
-6. Implement chunking, embeddings, indexing, retrieval, citations, and native RAG with Workspace/permission filtering and Privacy Shield authorization.
-7. Integrate GoreeCloud Search for current-information research.
-8. Add Wardveil-governed tools and agents.
-9. Implement Privacy Shield processing decisions/evidence and user controls.
+6. Implement Privacy Shield and Identity authorization inputs for the future knowledge pipeline before enabling chunking, embeddings, indexing, retrieval, citations, or model-context use.
+7. Implement native RAG with Workspace/permission filtering only after those gates are authoritative.
+8. Integrate GoreeCloud Search for current-information research.
+9. Add Wardveil-governed tools and agents.
 10. Implement Everkeep export, backup, restore, retention, portability, and continuity state.
 11. Connect GoreeCloud Mesh contracts and broader first-party interoperability.
 12. Complete visual-identity approval and synchronized derivatives through the unified branding repository.
