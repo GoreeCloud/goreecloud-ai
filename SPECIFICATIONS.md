@@ -6,7 +6,7 @@ GoreeCloud AI is original GoreeCloud-owned AI application and orchestration soft
 
 ## Current development state
 
-The active Milestone 0 foundation includes a React/TypeScript/Vite client, Node.js backend, Ollama model discovery/streaming chat boundary, conversation persistence, model roles, Workspaces, private attachment storage, Wardveil-gated attachment release, attachment quotas/deletion, the first passive-text extraction boundary, and an opt-in live runtime validator for the application-to-Ollama path.
+The active Milestone 0 foundation includes a React/TypeScript/Vite client, Node.js backend, Ollama model discovery/streaming chat boundary, conversation persistence, model roles, Workspaces, private attachment storage, Wardveil-gated attachment release, attachment quotas/deletion, the first passive-text extraction boundary, a read-only knowledge-eligibility assessment, and an opt-in live runtime validator for the application-to-Ollama path.
 
 The default development server intentionally has no fabricated Wardveil scanner transport. Without an authenticated scanner adapter, uploads remain private/staged and `unverified` rather than becoming eligible for extraction or AI context.
 
@@ -27,6 +27,24 @@ UTF-8 decoding is fatal, unsupported control bytes fail closed, JSON must parse,
 
 This source foundation does not authorize PDF/Office/HTML/archive parsing, embeddings, indexing, RAG retrieval, model-context use, tool execution, generated-code execution, or external processing.
 
+## Knowledge-eligibility observation contract
+
+`GET /api/files/:id/knowledge-eligibility` is a read-only assessment surface. It does not create extraction, embeddings, chunks, indexes, retrieval entries, model context, or external processing.
+
+The assessment reports current gates for:
+
+- Wardveil release/context-use state;
+- safe text-extraction eligibility and binding;
+- GoreeCloud Identity authorization;
+- Privacy Shield purpose/data-use authorization;
+- indexing;
+- retrieval; and
+- model-context use.
+
+The source foundation deliberately reports `eligibleForIndexing: false`, `eligibleForRetrieval: false`, and `eligibleForModelContext: false` even when Wardveil release and safe extraction are satisfied. Identity authorization and Privacy Shield authorization are still pending, while indexing, retrieval, and model-context authorization remain disabled/not implemented.
+
+The assessment may distinguish blocked security, blocked parser/extraction, pending extraction, and pending authorization. It is evidence about current gate state, not authority to advance to the next processing stage.
+
 ## Live runtime-validation contract
 
 `npm run validate:runtime` validates the first-party application path rather than connecting a browser client directly to Ollama. The base run checks GoreeCloud AI service health, reported Wardveil scanner configuration state, and Ollama model discovery through `/api/ollama/models`.
@@ -41,14 +59,14 @@ A passing run proves only the runtime path exercised. It does not establish Gore
 
 - **Glaze UI:** current mandatory consumer target is Glaze UI 2.0.0. Exact-revision GoreeCloud AI conformance remains pending.
 - **Wardveil Security:** source-level artifact trust enforcement exists, but authenticated deployed Scan transport and application production acceptance remain pending. GoreeCloud AI does not connect directly to ClamAV.
-- **Privacy Shield:** local-first/minimized processing is a product requirement. Privacy Shield remains authoritative for whether extracted/file/conversation content may be used, retained, transferred, or processed for a declared purpose; runtime acceptance is pending.
+- **Privacy Shield:** local-first/minimized processing is a product requirement. Privacy Shield remains authoritative for whether extracted/file/conversation content may be used, retained, transferred, or processed for a declared purpose; the eligibility surface explicitly keeps this gate pending rather than fabricating authorization.
 - **Everkeep:** export, backup, restore, preservation, portability, succession, attachment/extraction lifecycle, and application recovery acceptance remain pending.
-- **GoreeCloud Identity:** production users, sessions, service identity, delegated authority, and durable multi-user boundaries remain pending; the optional API bearer is development-only.
+- **GoreeCloud Identity:** production users, sessions, service identity, delegated authority, and durable multi-user boundaries remain pending; the optional API bearer is development-only and the eligibility surface keeps Identity authorization pending.
 - **GoreeCloud Mesh:** cross-system capability/evidence coordination remains pending and cannot manufacture AI security/privacy/continuity truth.
 
 ## Validation
 
-CI validates application TypeScript, server syntax, native server/security/lifecycle tests, production client build, Python Wardveil reference behavior, the AI/Wardveil contract, Python compilation, and syntax of the opt-in runtime validator. Live Ollama interoperability remains a separate target-environment gate until an approved run is executed and recorded.
+CI validates application TypeScript, server syntax, native server/security/lifecycle/knowledge-eligibility tests, production client build, Python Wardveil reference behavior, the AI/Wardveil contract, Python compilation, and syntax of the opt-in runtime validator. Live Ollama interoperability remains a separate target-environment gate until an approved run is executed and recorded.
 
 ## Stable boundary
 
