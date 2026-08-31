@@ -11,6 +11,7 @@
 - Node-native Wardveil artifact trust gate with current authoritative clean-evidence checks, post-scan digest verification, fail-closed unavailable/unknown behavior, and non-destructive quarantine handoff state.
 - Explicit attachment trust presentation: Verified, Unverified, Held, and Blocked.
 - Passive post-Wardveil text extraction for released UTF-8 text, Markdown, and JSON with source digest revalidation and private extracted-text persistence.
+- Read-only knowledge-eligibility assessment that reports Wardveil, extraction, Identity, Privacy Shield, indexing, retrieval, and model-context gates while keeping all knowledge-use authorizations false.
 - Independent Python Wardveil reference contract and validation suite.
 - Opt-in live application/runtime validation for service health, Ollama discovery, and an explicitly selected streamed model request through the GoreeCloud AI backend.
 - Root user manual plus a synchronized central GoreeCloud User Manuals copy.
