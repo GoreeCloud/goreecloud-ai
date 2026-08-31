@@ -11,16 +11,17 @@ Native GoreeCloud-owned AI application for private conversations, Workspaces, kn
 - [Benefits](BENEFITS.md)
 - [Competitive objectives](COMPETITIVE-OBJECTIVES.md)
 - [User manual](USER-MANUAL.md)
+- [Knowledge authorization boundary](docs/KNOWLEDGE-AUTHORIZATION.md)
 - [Branding authority](BRANDING.md)
 
 ## Product boundary
 
 GoreeCloud AI is an original first-party GoreeCloud application rather than a reskinned third-party AI interface. The intended permanent component relationship is:
 
-- **GoreeCloud AI** — conversations, Workspaces, knowledge/RAG, files, tools, agents, artifacts, research orchestration, model-role selection, and the user-facing product.
+- **GoreeCloud AI** — conversations, Workspaces, knowledge/RAG, files, tools, agents, artifacts, research orchestration, application authorization, model-role selection, and the user-facing product.
 - **Ollama** — replaceable local model-execution runtime.
 - **GoreeCloud Search** — first-party current-information and Internet-research provider.
-- **GoreeCloud Identity** — identity, authentication, sessions, credentials, and delegated authority.
+- **GoreeCloud Identity** — authenticated identity, sessions, credentials, and approved identity claims; GoreeCloud AI still owns application authorization/data-access decisions.
 - **Wardveil Security** — protection, trust, scanning, policy, verification, and response boundaries.
 - **Privacy Shield** — privacy, consent, purpose, data-use, and minimization authority.
 - **Everkeep** — backup, restore, recovery, preservation, portability, succession, and continuity authority.
@@ -34,19 +35,19 @@ Open WebUI, AnythingLLM, SearXNG, individual model names, and individual scanner
 The repository includes:
 
 - React + TypeScript + Vite client and responsive conversation shell.
-- Adaptive navigation/context panel, system light/dark appearance, reduced-motion support, and first-party dialogs.
 - Backend-owned Ollama discovery and streaming NDJSON chat with cancellation, timeout, and upstream failure isolation.
 - Stable GoreeCloud model-role abstraction mapped to replaceable installed Ollama models.
-- Persistent conversations with rename, delete, edit/resubmit, regeneration, branching, and explicit lineage metadata.
+- Persistent conversations with rename, delete, edit/resubmit, regeneration, branching, and lineage metadata.
 - Native Workspaces with instructions, default model role, file references, knowledge/tool placeholders, and research preferences.
-- Private attachment staging, restrictive permissions, SHA-256 binding, metadata, per-file/count/aggregate quotas, storage usage, deletion, and Workspace reference reconciliation.
-- Node-native Wardveil artifact trust gate with exact resource/digest binding, current authoritative clean evidence, post-scan rehashing, fail-closed unavailable/unknown behavior, and non-destructive quarantine handoff state.
-- Explicit attachment trust states: Verified, Unverified, Held, and Blocked.
+- Private attachment staging, restrictive permissions, SHA-256 binding, quotas, storage usage, deletion, and Workspace reference reconciliation.
+- Node-native Wardveil artifact trust gate with exact resource/digest binding, fail-closed unavailable/unknown behavior, and non-destructive quarantine handoff state.
 - Passive post-Wardveil text extraction for released UTF-8 text, Markdown, and JSON with source-digest revalidation and private derived records.
-- Read-only knowledge-eligibility assessment that makes blocking/pending gates visible without authorizing indexing, retrieval, or model context.
+- Read-only knowledge-eligibility assessment that never authorizes indexing, retrieval, or model context.
+- Bounded non-persistent knowledge-authorization assessment for supplied GoreeCloud Identity/application context plus the current Privacy Shield decision contract.
+- Strict resource, operation, actor, request, processing-zone, destination, obligation, and expiration binding with Privacy Shield `DENY`/`REQUIRE_USER_DECISION` semantics preserved.
+- Explicit source-trust boundary: supplied authorization JSON is not production-trusted, creates no durable authorization, and cannot execute a knowledge stage while authenticated adapters are absent.
 - Independent Python Wardveil artifact-intake reference contract and validation suite.
-- An opt-in live runtime validator for the first-party health/model-discovery path and optional streamed Ollama chat through the GoreeCloud AI backend.
-- Unified GoreeCloud branding authority reference.
+- Opt-in live runtime validator for first-party service health/model discovery and optional streamed Ollama chat through the GoreeCloud AI backend.
 
 The current development server deliberately has no fabricated Wardveil scanner transport. Default uploads therefore remain private/staged and `unverified`; they cannot enter text extraction or AI context.
 
@@ -58,16 +59,18 @@ Browser / native client
         v
 GoreeCloud AI backend
         |
-        +-- Identity session/service authority                  [planned]
+        +-- Identity authenticated actor/session adapter        [planned]
+        +-- GoreeCloud AI application authorization            [assessment foundation]
         +-- conversation persistence                            [foundation]
         +-- Workspace persistence                               [foundation]
         +-- private attachment staging + trust state            [foundation]
         +-- Wardveil artifact runtime gate                      [source foundation]
         +-- authenticated Wardveil Scan transport               [planned]
         +-- passive text extraction                             [foundation]
-        +-- knowledge-eligibility observation                   [foundation]
+        +-- knowledge eligibility                               [observation foundation]
+        +-- Privacy Shield decision-input assessment            [source foundation]
+        +-- authenticated Privacy Shield enforcement/capability [planned]
         +-- chunking / embeddings / indexing / RAG              [planned]
-        +-- Privacy Shield decisions/evidence                   [planned]
         +-- Everkeep lifecycle/recovery                         [planned]
         +-- GoreeCloud Search research                          [planned]
         +-- GoreeCloud Mesh integration                         [planned]
@@ -99,34 +102,40 @@ A clean malware result is not permission to execute code, load models, run tools
 
 ### Passive text extraction
 
-`POST /api/files/:id/extraction` is a separate post-release gate. It accepts only attachments that are `available`, stored in `released` state, and whose Wardveil decision allows both release and context-oriented use.
+`POST /api/files/:id/extraction` is a separate post-release gate. It accepts only attachments that are `available`, stored in `released` state, and whose Wardveil decision allows release/context-oriented use.
 
-Before parsing, the released bytes are re-hashed and must still match the accepted attachment digest. The initial media-type allowlist is intentionally small:
-
-- `text/plain`
-- `text/markdown`
-- `text/x-markdown`
-- `application/json`
-
-The parser uses fatal UTF-8 decoding, rejects unsupported control bytes, requires JSON to parse, and enforces `MAX_TEXT_EXTRACTION_BYTES`. Extracted text is stored as private mode-`0600` application data bound to the source resource/digest plus its own SHA-256 digest.
-
-PDF, HTML, Office documents, archives, scripts, executables, models, tools, images, audio, video, and other parser-complex/active formats are excluded from this first boundary.
+Before parsing, the released bytes are re-hashed and must still match the accepted attachment digest. Initial media types are `text/plain`, `text/markdown`, `text/x-markdown`, and `application/json`. Fatal UTF-8 decoding, unsupported-control rejection, JSON validation, and `MAX_TEXT_EXTRACTION_BYTES` apply. Extracted text remains private application data bound to source/content SHA-256 digests.
 
 Extraction is not chunking, embedding, indexing, retrieval, RAG eligibility, model-context authorization, Privacy Shield authorization, or external-processing permission.
 
-### Knowledge eligibility observation
+## Knowledge gate observation and authorization assessment
 
-`GET /api/files/:id/knowledge-eligibility` reports the current gates that would have to be satisfied before a future knowledge pipeline could use an attachment. It is read-only and does not create derived content or advance the file into another lifecycle stage.
+`GET /api/files/:id/knowledge-eligibility` reports current Wardveil, extraction, Identity/application, Privacy Shield, indexing, retrieval, and model-context gate state without creating or advancing any stage.
 
-The current response reports Wardveil state, safe-extraction state, GoreeCloud Identity authorization state, Privacy Shield authorization state, and whether indexing, retrieval, and model-context stages exist. Even when Wardveil release and a digest-bound extraction are satisfied, the current source reports:
+`POST /api/files/:id/knowledge-authorization-assessment` additionally accepts bounded authorization inputs for one application-local operation:
 
+- `goreecloud-ai.knowledge.index`
+- `goreecloud-ai.knowledge.retrieve`
+- `goreecloud-ai.knowledge.model-context`
+
+These are GoreeCloud AI application-local operation identifiers. They are not new central GoreeCloud Identity scopes and are not additions to the canonical Privacy Shield capability registry.
+
+The Identity input must bind an authenticated actor, valid observation/expiry window, exact attachment resource ID, and GoreeCloud AI application permission. Privacy input is structurally aligned to the current Privacy Shield decision contract and checks request/decision binding, resource, operation, requester/acting user, processing zone, destination, permitted operations, obligations, and expiration.
+
+Privacy Shield `DENY` blocks; `REQUIRE_USER_DECISION` remains pending; `ALLOW`/`ALLOW_WITH_CONSTRAINTS` can only become structurally satisfied when checked bindings agree.
+
+Crucially, a structurally satisfied assessment still returns:
+
+- `sourceTrust.productionTrustedInput: false`
+- `persistentAuthorizationCreated: false`
+- `executionAuthorized: false`
 - `eligibleForIndexing: false`
 - `eligibleForRetrieval: false`
 - `eligibleForModelContext: false`
 
-Identity and Privacy Shield authorization remain pending; indexing, retrieval, and model-context authorization remain disabled/not implemented. This prevents a readiness display from becoming an accidental authorization bypass.
+Authenticated GoreeCloud Identity/Privacy Shield adapters, operation-bound capability/signature verification, durable decision/evidence state, revocation/replay handling, and actual indexing/retrieval/model-context implementation remain absent. A client-supplied JSON object cannot manufacture production authority.
 
-See `docs/WARDVEIL_ARTIFACT_SECURITY.md`, `docs/ATTACHMENT_LIFECYCLE.md`, and `USER-MANUAL.md`.
+See `docs/KNOWLEDGE-AUTHORIZATION.md`, `docs/WARDVEIL_ARTIFACT_SECURITY.md`, and `docs/ATTACHMENT_LIFECYCLE.md`.
 
 ## API foundation
 
@@ -154,6 +163,7 @@ DELETE /api/files/:id
 POST   /api/files/:id/extraction
 GET    /api/files/:id/extraction
 GET    /api/files/:id/knowledge-eligibility
+POST   /api/files/:id/knowledge-authorization-assessment
 ```
 
 The current JSON/local-file adapters are development persistence boundaries, not the final multi-user database design.
@@ -180,9 +190,9 @@ Candidate models are not permanent dependencies.
 | --- | --- | --- |
 | `PORT` | `8787` | Local backend port. |
 | `OLLAMA_URL` | `http://127.0.0.1:11434` | Ollama address visible to the backend. |
-| `GOREECLOUD_AI_API_TOKEN` | unset | Optional development direct-API bearer; not final Identity. |
+| `GOREECLOUD_AI_API_TOKEN` | unset | Optional development direct-API bearer; not final Identity/application authorization. |
 | `GOREECLOUD_AI_DATA_DIR` | `./data` | Local private persistence/staging/released/extraction root. |
-| `MAX_BODY_BYTES` | `1000000` | Maximum JSON request body. |
+| `MAX_BODY_BYTES` | `1000000` | Maximum JSON request body, including authorization assessment input. |
 | `MAX_FILE_BYTES` | `26214400` | Maximum attachment size. |
 | `MAX_FILE_COUNT` | `1000` | Development attachment-record limit. |
 | `MAX_TOTAL_FILE_BYTES` | `1073741824` | Development aggregate attachment limit. |
@@ -191,23 +201,11 @@ Candidate models are not permanent dependencies.
 
 Do not commit `.env`, `data/`, or reusable credentials.
 
-## Local development
+## Local development and validation
 
 ```bash
 npm install
 cp .env.example .env
-npm run dev:server
-```
-
-Run the Vite client separately:
-
-```bash
-npm run dev
-```
-
-## Validation
-
-```bash
 npm run check
 npm run check:server
 npm run test:server
@@ -216,54 +214,41 @@ python3 scripts/test_ai_artifact_security.py
 python3 scripts/validate_wardveil_ai_integration.py
 ```
 
-Native tests cover Wardveil clean release, unavailable scanner behavior, malicious handoff, expired evidence, post-scan mutation, restrictive storage, quotas, deletion/reference cleanup, passive-text extraction eligibility, digest mismatch, invalid UTF-8/JSON, parser allowlist behavior, extraction cleanup, and non-authorizing knowledge-eligibility gate behavior.
+`npm run check:server` syntax-checks the authorization, eligibility, runtime-validator, and server modules. Native tests cover Wardveil trust/lifecycle, extraction, quotas/deletion, authorization input binding, Privacy Shield outcomes, and proof that knowledge authorization assessment remains non-executable.
 
 ### Live application/runtime validation
-
-Run the first-party runtime validator against an approved test endpoint:
 
 ```bash
 GOREECLOUD_AI_URL=http://127.0.0.1:8787 npm run validate:runtime
 ```
 
-The base validation requires GoreeCloud AI health and Ollama model discovery through the application backend. If the backend uses the current development direct-API bearer, provide `GOREECLOUD_AI_API_TOKEN` through protected runtime configuration; the validator does not print it.
-
-To exercise one real streamed model request through the backend, explicitly select an installed model:
-
-```bash
-VALIDATE_OLLAMA_MODEL='<installed-model-id>' npm run validate:runtime
-```
-
-The validator requires assistant content chunks plus a terminal `done` event but does not print the generated model response. `VALIDATE_REQUIRE_WARDVEIL_SCANNER=true` can be used only in an environment that is expected to expose an authenticated Wardveil scanner transport; the validator fails if the application reports the scanner as unconfigured instead of manufacturing positive evidence.
-
-`npm run check:server` syntax-checks the runtime validator and knowledge-eligibility module alongside the server modules.
+The base validation requires GoreeCloud AI health and Ollama model discovery through the application backend. `VALIDATE_OLLAMA_MODEL='<installed-model-id>'` can exercise one streamed model request. `VALIDATE_REQUIRE_WARDVEIL_SCANNER=true` fails if an environment expected to have an authenticated Wardveil transport reports it unconfigured.
 
 Successful source checks or runtime validation do not establish Wardveil/Privacy Shield/Everkeep/Identity/Mesh production acceptance, recoverability, exact Glaze UI conformance, deployment readiness, or Stable qualification.
 
 ## Platform-system acceptance
 
-- **Glaze UI:** mandatory target is current Stable Glaze UI 2.0.0; GoreeCloud AI exact-revision consumer acceptance remains pending.
+- **Glaze UI:** mandatory target is current Stable Glaze UI 2.1.0. GoreeCloud AI is migration-required from historical 2.0.0 until product-specific 2.1.0 conformance is complete.
 - **Wardveil Security:** source trust enforcement exists; deployed authenticated Scan transport and AI consumer production acceptance remain pending.
-- **Privacy Shield:** remains authoritative for whether files/extractions/conversations may be used, retained, transferred, sent to models, researched, or externally processed. The knowledge-eligibility surface explicitly leaves this authorization pending.
-- **Everkeep:** attachment/extraction retention, export, backup, restore, recovery, preservation, portability, and succession remain pending application-specific acceptance.
-- **GoreeCloud Identity:** production sessions, service identity, multi-user authorization, and delegated authority remain pending. The knowledge-eligibility surface explicitly leaves this authorization pending.
+- **Privacy Shield:** current decision fields/outcomes are structurally consumed, but authenticated runtime enforcement/capability/evidence and AI consumer acceptance remain pending. Supplied JSON cannot create Privacy Shield authority.
+- **Everkeep:** attachment/extraction/future knowledge retention, export, backup, restore, recovery, preservation, portability, and succession remain pending application-specific acceptance.
+- **GoreeCloud Identity:** Identity establishes authenticated identity/claims while GoreeCloud AI owns application authorization. Current assessment consumes supplied context but authenticated production Identity/session integration and durable multi-user boundaries remain pending.
 - **GoreeCloud Mesh:** cross-system capability/evidence coordination remains pending.
 
 ## Roadmap
 
-1. Execute and record live application-to-Ollama validation in the intended environment using the bounded runtime validator.
-2. Implement authenticated GoreeCloud AI-to-Wardveil Scan transport and exact-runtime clean/malicious/unavailable acceptance without bypassing the native trust gate.
-3. Complete GoreeCloud Identity-backed authenticated sessions and production persistence boundaries.
-4. Continue Glaze UI 2.0.0 migration and collect exact consumer conformance evidence.
-5. Add separately reviewed parsers and provenance only for content formats whose security/privacy boundaries are defined.
-6. Implement Privacy Shield and Identity authorization inputs for the future knowledge pipeline before enabling chunking, embeddings, indexing, retrieval, citations, or model-context use.
-7. Implement native RAG with Workspace/permission filtering only after those gates are authoritative.
+1. Execute and record live application-to-Ollama validation in the intended environment.
+2. Implement authenticated GoreeCloud AI-to-Wardveil Scan transport and controlled clean/malicious/unavailable acceptance.
+3. Implement authenticated GoreeCloud Identity sessions/service identities plus GoreeCloud AI resource/Workspace authorization.
+4. Implement authenticated Privacy Shield PEP/PDP/capability/evidence integration for knowledge operations.
+5. Migrate the application to Stable Glaze UI 2.1.0 and collect exact consumer conformance evidence.
+6. Add separately reviewed parsers/provenance only where security/privacy boundaries are defined.
+7. Implement chunking, embeddings, indexing, retrieval, citations, and native RAG only after authoritative Identity/application/Privacy gates exist.
 8. Integrate GoreeCloud Search for current-information research.
 9. Add Wardveil-governed tools and agents.
-10. Implement Everkeep export, backup, restore, retention, portability, and continuity state.
+10. Implement Everkeep export, backup, restore, retention, portability, and continuity for application/derived state.
 11. Connect GoreeCloud Mesh contracts and broader first-party interoperability.
-12. Complete visual-identity approval and synchronized derivatives through the unified branding repository.
-13. Add runtime/interaction tests, deployment, monitoring, and production-readiness evidence.
+12. Complete runtime/interaction tests, deployment, monitoring, and production-readiness evidence.
 
 ## Visual identity
 
