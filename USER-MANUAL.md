@@ -2,7 +2,7 @@
 
 ## Status
 
-GoreeCloud AI is under active native development. The current Draft Milestone 0 branch provides the first-party conversational application foundation, backend-owned Ollama access, persistent conversations, model roles, Workspaces, private attachment handling, Wardveil-gated attachment release, quota/deletion controls, and bounded passive text extraction.
+GoreeCloud AI is under active native development. The current Draft Milestone 0 branch provides the first-party conversational application foundation, backend-owned Ollama access, persistent conversations, model roles, Workspaces, private attachment handling, Wardveil-gated attachment release, quota/deletion controls, bounded passive text extraction, and a read-only knowledge-eligibility assessment.
 
 It is not Stable or production-ready.
 
@@ -93,6 +93,34 @@ PDF, HTML, Office documents, archives, scripts/executables, images, audio, video
 
 Extraction does **not** authorize chunking, embeddings, indexing, retrieval, RAG participation, model-context use, tool execution, generated-code execution, research, or external processing.
 
+## Knowledge Eligibility Assessment
+
+For an existing attachment, the development API exposes:
+
+`GET /api/files/:id/knowledge-eligibility`
+
+This is a read-only inspection endpoint. It does not create an extraction, chunk data, compute embeddings, index content, retrieve content, insert model context, invoke research, or transfer data externally.
+
+The assessment reports the current state of these gates:
+
+- **Wardveil** — whether the exact attachment has been security-released and allowed for context-oriented use;
+- **Safe extraction** — whether the file type is supported and a digest-bound extraction exists;
+- **GoreeCloud Identity** — currently pending because production user/session/authorization integration is not implemented;
+- **Privacy Shield** — currently pending because authoritative purpose/data-use authorization is not implemented;
+- **Indexing** — disabled/not implemented;
+- **Retrieval** — disabled/not implemented;
+- **Model context** — disabled/not implemented.
+
+The assessment can report `blocked_security`, `blocked_parser_or_extraction`, `pending_extraction`, or `pending_authorization`.
+
+Even when Wardveil release and safe extraction are satisfied, the current response keeps all of these false:
+
+- `eligibleForIndexing`
+- `eligibleForRetrieval`
+- `eligibleForModelContext`
+
+Do not interpret `pending_authorization` as approval. It means the local security/extraction prerequisites may be ready, but required Identity and Privacy Shield authority still does not exist and the downstream knowledge stages remain disabled.
+
 ## Live Runtime Validation
 
 The repository includes:
@@ -117,7 +145,7 @@ A passing runtime validation proves only the application/runtime path exercised 
 
 ## Privacy and External Processing
 
-Privacy Shield remains authoritative for whether conversation, attachment, extracted, knowledge, or research data may be used for a purpose, retained, sent to a model, searched, or transferred externally. Current source behavior must not be interpreted as Privacy Shield runtime acceptance.
+Privacy Shield remains authoritative for whether conversation, attachment, extracted, knowledge, or research data may be used for a purpose, retained, sent to a model, searched, or transferred externally. The knowledge-eligibility assessment deliberately reports Privacy Shield authorization as pending rather than fabricating a positive decision.
 
 GoreeCloud Search research integration and external-processing disclosure are not yet production-accepted. A Search outage must eventually remain isolated from local conversations and local knowledge workflows.
 
@@ -131,13 +159,13 @@ The Draft branch still requires, among other evidence:
 
 - live authenticated Ollama interoperability evidence in the intended environment;
 - a deployed authenticated Wardveil scanner transport, scanner/signature health, and controlled clean/malicious runtime validation;
-- GoreeCloud Identity-backed multi-user/session boundaries;
-- Privacy Shield runtime acceptance;
+- GoreeCloud Identity-backed multi-user/session boundaries and knowledge authorization;
+- Privacy Shield runtime acceptance and knowledge/data-use authorization;
 - Everkeep application lifecycle and recovery acceptance;
 - GoreeCloud Mesh integration where required;
 - additional safe parser decisions before broader ingestion;
-- explicit authorization before chunking, embeddings, indexing, retrieval, or RAG;
+- explicit authoritative gates before chunking, embeddings, indexing, retrieval, RAG, or model-context use;
 - exact current Glaze UI consumer conformance evidence;
 - deployment and broader production-readiness validation.
 
-Do not represent successful source checks or local runtime validation as Stable or production-ready evidence.
+Do not represent successful source checks, a knowledge-eligibility response, or local runtime validation as Stable or production-ready evidence.
