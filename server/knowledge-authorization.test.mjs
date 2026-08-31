@@ -83,7 +83,7 @@ test('blocks unauthenticated or application-unauthorized Identity input', () => 
 })
 
 test('blocks expired Identity authorization input and rejects invalid time ordering', () => {
-  const expired = input({ identity: { expiresAt: '2026-08-30T20:00:00.000Z' } })
+  const expired = input({ identity: { observedAt: '2026-08-30T19:59:00.000Z', expiresAt: '2026-08-30T20:00:00.000Z' } })
   assert.equal(assessKnowledgeAuthorizationInput(record, expired, now).identity.reason, 'identity_authorization_expired')
 
   const future = input({ identity: { observedAt: '2026-08-30T20:31:00.000Z' } })
