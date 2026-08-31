@@ -30,9 +30,12 @@ function identityGate(record, operation, identity, nowMs) {
   if (identity.version !== 1 || identity.authority !== 'GoreeCloud Identity') invalid('unsupported identity authorization input')
   if (!identity.actor || typeof identity.actor !== 'object' || Array.isArray(identity.actor)) invalid('identity actor is required')
   if (!nonEmpty(identity.actor.id) || !ACTOR_TYPES.has(identity.actor.type)) invalid('identity actor is invalid')
-  if (!nonEmpty(identity.observedAt) || dateMs(identity.observedAt) === null) invalid('identity observedAt must be a valid date-time')
+  const observedAt = dateMs(identity.observedAt)
+  if (observedAt === null) invalid('identity observedAt must be a valid date-time')
   const expiresAt = dateMs(identity.expiresAt)
   if (expiresAt === null) invalid('identity expiresAt must be a valid date-time')
+  if (observedAt > nowMs) invalid('identity observedAt cannot be in the future')
+  if (expiresAt <= observedAt) invalid('identity expiresAt must be later than observedAt')
   if (!identity.applicationAuthorization || typeof identity.applicationAuthorization !== 'object' || Array.isArray(identity.applicationAuthorization)) {
     invalid('application authorization context is required')
   }
@@ -73,6 +76,7 @@ function validatePrivacyDecision(decision) {
   if (!nonEmpty(decision.decision_id) || !nonEmpty(decision.request_id) || !PRIVACY_OUTCOMES.has(decision.outcome) || !nonEmpty(decision.reason_code)) {
     invalid('Privacy Shield decision identity is invalid')
   }
+  if (!Object.hasOwn(decision, 'effective_scope')) invalid('Privacy Shield effective_scope is required')
   if (!Array.isArray(decision.permitted_operations) || !decision.permitted_operations.every(nonEmpty)) invalid('Privacy Shield permitted_operations is invalid')
   if (!PRIVACY_ZONES.has(decision.processing_zone)) invalid('Privacy Shield decision processing_zone is invalid')
   if (!Array.isArray(decision.permitted_destinations) || !decision.permitted_destinations.every(nonEmpty)) invalid('Privacy Shield permitted_destinations is invalid')
@@ -84,9 +88,10 @@ function validatePrivacyDecision(decision) {
 function requesterMatchesActor(requester, actor) {
   if (requester.type === 'application') {
     if (actor.type === 'user') return requester.acting_user === actor.id
-    return true
+    if (actor.type === 'application') return requester.id === actor.id && (requester.acting_user === undefined || requester.acting_user === null)
+    return false
   }
-  return requester.id === actor.id
+  return requester.id === actor.id && (requester.acting_user === undefined || requester.acting_user === null)
 }
 
 function privacyGate(record, operation, privacy, identity, nowMs) {
