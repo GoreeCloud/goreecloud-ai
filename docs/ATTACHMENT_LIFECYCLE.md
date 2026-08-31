@@ -1,6 +1,6 @@
 # GoreeCloud AI Attachment Lifecycle
 
-GoreeCloud AI owns the attachment lifecycle around the Wardveil artifact trust boundary. Storage success, security release, extraction, indexing, context use, retention, and deletion are separate state transitions.
+GoreeCloud AI owns the attachment lifecycle around the Wardveil artifact trust boundary. Storage success, security release, extraction, knowledge-eligibility observation, indexing, context use, retention, and deletion are separate state transitions.
 
 ## Current development flow
 
@@ -16,9 +16,11 @@ upload request
   -> explicit passive-text extraction eligibility gate
   -> digest recheck
   -> private extracted-text record
+  -> read-only knowledge-eligibility assessment
+  -> indexing / retrieval / model context remain disabled
 ```
 
-The Wardveil rules documented in `WARDVEIL_ARTIFACT_SECURITY.md` remain authoritative for trust release. Quotas never turn unverified content into clean content, extraction never upgrades Wardveil state, and deletion never becomes Wardveil Quarantine.
+The Wardveil rules documented in `WARDVEIL_ARTIFACT_SECURITY.md` remain authoritative for trust release. Quotas never turn unverified content into clean content, extraction never upgrades Wardveil state, knowledge-eligibility observation never creates authorization, and deletion never becomes Wardveil Quarantine.
 
 ## Storage limits
 
@@ -58,6 +60,30 @@ Extracted content is stored under the application data directory as a private mo
 
 This is extraction only. It does not establish chunking, embeddings, indexing, retrieval, RAG participation, Workspace permission filtering, model-context authorization, provenance display, external processing, or Privacy Shield authorization.
 
+## Read-only knowledge-eligibility assessment
+
+`GET /api/files/:id/knowledge-eligibility` inspects prerequisites without mutating file, extraction, knowledge, or model state.
+
+The assessment evaluates:
+
+- Wardveil release and context-use state;
+- whether the current media type is accepted by the safe extraction boundary;
+- whether a stored extraction remains bound to the exact file/resource digest;
+- GoreeCloud Identity authorization state;
+- Privacy Shield authorization state; and
+- whether indexing, retrieval, and model-context stages are enabled.
+
+Current assessment states are:
+
+- `blocked_security` — Wardveil release/context use is not satisfied;
+- `blocked_parser_or_extraction` — the parser boundary is unsupported or the derived extraction is not safely bound;
+- `pending_extraction` — Wardveil and parser eligibility are satisfied but no bound extraction exists; and
+- `pending_authorization` — local security/extraction prerequisites are satisfied but required Identity and Privacy Shield authority is still pending.
+
+The current source always returns `eligibleForIndexing: false`, `eligibleForRetrieval: false`, and `eligibleForModelContext: false`. Identity and Privacy Shield gates remain pending and the downstream knowledge stages remain disabled/not implemented.
+
+This is intentionally an observation contract rather than a readiness shortcut. A positive local prerequisite cannot be promoted into permission to index, retrieve, send content to a model, or process data externally.
+
 ## Deletion
 
 Deleting an attachment first removes any derived text extraction and then removes both possible byte locations:
@@ -73,6 +99,8 @@ Everkeep backup/recovery, legal retention, succession, export, and restore seman
 
 A released clean attachment may become eligible for safe context-oriented processing only where the Wardveil decision explicitly allows it. Security release does not itself authorize parsing with unsafe libraries, executing embedded content, loading a model, running code, installing a tool, or publishing data externally.
 
-Privacy Shield remains authoritative for whether extracted content may be used for a declared purpose, retained, sent to a model, transferred externally, or included in another processing flow. The current extraction module does not fabricate Privacy Shield authorization.
+Privacy Shield remains authoritative for whether extracted content may be used for a declared purpose, retained, sent to a model, transferred externally, or included in another processing flow. The current extraction and eligibility modules do not fabricate Privacy Shield authorization.
+
+GoreeCloud Identity remains authoritative for production user/session/service and delegated authorization. The eligibility assessment deliberately reports Identity authorization as pending rather than treating the development API bearer as production authority.
 
 File provenance, chunking, indexing, permission filtering, RAG participation, active-content policy, Privacy Shield evidence, external-processing disclosure, and Everkeep treatment remain separate gates.
