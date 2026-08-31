@@ -1,0 +1,138 @@
+import assert from 'node:assert/strict'
+import test from 'node:test'
+import { assessKnowledgeAuthorizationInput, KNOWLEDGE_OPERATIONS } from './knowledge-authorization.mjs'
+
+const now = Date.parse('2026-08-30T20:30:00.000Z')
+const record = {
+  id: '11111111-1111-4111-8111-111111111111',
+  resourceId: 'goreecloud-ai-file:11111111-1111-4111-8111-111111111111',
+}
+
+function input(overrides = {}) {
+  const operation = overrides.operation ?? KNOWLEDGE_OPERATIONS.index
+  return {
+    operation,
+    identity: {
+      version: 1,
+      authority: 'GoreeCloud Identity',
+      actor: { id: 'user-1', type: 'user' },
+      authenticated: true,
+      observedAt: '2026-08-30T20:29:00.000Z',
+      expiresAt: '2026-08-30T21:30:00.000Z',
+      applicationAuthorization: {
+        resourceId: record.resourceId,
+        permittedOperations: [operation],
+      },
+      ...(overrides.identity ?? {}),
+    },
+    privacy: {
+      request: {
+        request_id: 'privacy-request-1',
+        requester: { id: 'goreecloud-ai', type: 'application', acting_user: 'user-1' },
+        resource: { id: record.resourceId, classification: 'private-user-content' },
+        operation,
+        purpose: 'user-requested-private-knowledge',
+        processing_zone: 'local',
+        destination: 'goreecloud-ai-local-knowledge',
+        retention: { mode: 'user_defined' },
+        external_disclosure: false,
+      },
+      decision: {
+        decision_id: 'privacy-decision-1',
+        request_id: 'privacy-request-1',
+        outcome: 'ALLOW',
+        reason_code: 'policy_and_consent_allow',
+        effective_scope: null,
+        permitted_operations: [operation],
+        processing_zone: 'local',
+        permitted_destinations: ['goreecloud-ai-local-knowledge'],
+        retention: { mode: 'user_defined' },
+        expires_at: '2026-08-30T21:30:00.000Z',
+        obligations: ['preserve-private-local-processing'],
+      },
+      ...(overrides.privacy ?? {}),
+    },
+  }
+}
+
+test('accepts structurally bound Identity and Privacy inputs without creating execution authority', () => {
+  const assessment = assessKnowledgeAuthorizationInput(record, input(), now)
+  assert.equal(assessment.identity.status, 'satisfied')
+  assert.equal(assessment.privacy.status, 'satisfied')
+  assert.equal(assessment.sourceTrust.productionTrustedInput, false)
+  assert.equal(assessment.persistentAuthorizationCreated, false)
+  assert.equal(assessment.executionAuthorized, false)
+})
+
+test('treats GoreeCloud AI operation names as application-local authorization operations', () => {
+  assert.deepEqual(Object.values(KNOWLEDGE_OPERATIONS), [
+    'goreecloud-ai.knowledge.index',
+    'goreecloud-ai.knowledge.retrieve',
+    'goreecloud-ai.knowledge.model-context',
+  ])
+})
+
+test('blocks unauthenticated or application-unauthorized Identity input', () => {
+  const unauthenticated = input({ identity: { authenticated: false } })
+  assert.equal(assessKnowledgeAuthorizationInput(record, unauthenticated, now).identity.reason, 'identity_not_authenticated')
+
+  const operation = KNOWLEDGE_OPERATIONS.retrieve
+  const unauthorized = input({ operation })
+  unauthorized.identity.applicationAuthorization.permittedOperations = [KNOWLEDGE_OPERATIONS.index]
+  assert.equal(assessKnowledgeAuthorizationInput(record, unauthorized, now).identity.reason, 'application_operation_not_authorized')
+})
+
+test('blocks expired Identity authorization input', () => {
+  const value = input({ identity: { expiresAt: '2026-08-30T20:00:00.000Z' } })
+  assert.equal(assessKnowledgeAuthorizationInput(record, value, now).identity.reason, 'identity_authorization_expired')
+})
+
+test('honors Privacy Shield deny and require-user-decision outcomes', () => {
+  const denied = input()
+  denied.privacy.decision.outcome = 'DENY'
+  denied.privacy.decision.reason_code = 'purpose_not_allowed'
+  assert.deepEqual(assessKnowledgeAuthorizationInput(record, denied, now).privacy, {
+    status: 'blocked',
+    authority: 'Privacy Shield',
+    reason: 'purpose_not_allowed',
+  })
+
+  const decisionRequired = input()
+  decisionRequired.privacy.decision.outcome = 'REQUIRE_USER_DECISION'
+  decisionRequired.privacy.decision.reason_code = 'fresh_consent_required'
+  assert.deepEqual(assessKnowledgeAuthorizationInput(record, decisionRequired, now).privacy, {
+    status: 'pending',
+    authority: 'Privacy Shield',
+    reason: 'fresh_consent_required',
+  })
+})
+
+test('blocks mismatched Privacy Shield resource, operation, requester, destination, and expiry bindings', () => {
+  const resourceMismatch = input()
+  resourceMismatch.privacy.request.resource.id = 'different-resource'
+  assert.equal(assessKnowledgeAuthorizationInput(record, resourceMismatch, now).privacy.reason, 'privacy_resource_mismatch')
+
+  const operationMismatch = input()
+  operationMismatch.privacy.request.operation = KNOWLEDGE_OPERATIONS.retrieve
+  assert.equal(assessKnowledgeAuthorizationInput(record, operationMismatch, now).privacy.reason, 'privacy_operation_mismatch')
+
+  const actorMismatch = input()
+  actorMismatch.privacy.request.requester.acting_user = 'user-2'
+  assert.equal(assessKnowledgeAuthorizationInput(record, actorMismatch, now).privacy.reason, 'privacy_requester_actor_mismatch')
+
+  const destinationMismatch = input()
+  destinationMismatch.privacy.decision.permitted_destinations = ['other-destination']
+  assert.equal(assessKnowledgeAuthorizationInput(record, destinationMismatch, now).privacy.reason, 'privacy_destination_not_permitted')
+
+  const expired = input()
+  expired.privacy.decision.expires_at = '2026-08-30T20:00:00.000Z'
+  assert.equal(assessKnowledgeAuthorizationInput(record, expired, now).privacy.reason, 'privacy_decision_expired')
+})
+
+test('rejects malformed inputs instead of manufacturing authorization state', () => {
+  assert.throws(() => assessKnowledgeAuthorizationInput(record, { operation: 'not-supported' }, now), (error) => {
+    assert.equal(error.status, 400)
+    assert.equal(error.code, 'invalid_knowledge_authorization_input')
+    return true
+  })
+})
