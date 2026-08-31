@@ -3,6 +3,7 @@ import { createConversation, deleteConversation, getConversation, listConversati
 import { createWorkspace, deleteWorkspace, detachFileFromWorkspaces, getWorkspace, listWorkspaces, updateWorkspace } from './workspaces.mjs'
 import { deleteFile, getFileRecord, getFileStorageUsage, listFiles, storeFile } from './files.mjs'
 import { deleteTextExtraction, extractTextFile, getTextExtraction } from './text-extraction.mjs'
+import { getKnowledgeEligibility } from './knowledge-eligibility.mjs'
 
 const PORT = positiveNumberEnv('PORT', 8787)
 const OLLAMA_URL = (process.env.OLLAMA_URL ?? 'http://127.0.0.1:11434').replace(/\/$/, '')
@@ -153,7 +154,7 @@ async function handleFiles(req, res, pathname) {
       return json(res, file.status === 'available' ? 201 : 202, file)
     }
   }
-  const match = pathname.match(/^\/api\/files\/([0-9a-f-]+)(?:\/(extraction))?$/i)
+  const match = pathname.match(/^\/api\/files\/([0-9a-f-]+)(?:\/(extraction|knowledge-eligibility))?$/i)
   if (!match) return false
   const id = match[1]
   const resource = match[2]
@@ -163,6 +164,14 @@ async function handleFiles(req, res, pathname) {
     if (req.method === 'GET') {
       const extraction = await getTextExtraction(id)
       return extraction ? json(res, 200, extraction) : json(res, 404, { error: 'Text extraction not found' })
+    }
+    return false
+  }
+
+  if (resource === 'knowledge-eligibility') {
+    if (req.method === 'GET') {
+      const assessment = await getKnowledgeEligibility(id)
+      return assessment ? json(res, 200, assessment) : json(res, 404, { error: 'File not found' })
     }
     return false
   }
