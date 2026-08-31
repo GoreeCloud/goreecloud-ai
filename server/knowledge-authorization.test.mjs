@@ -82,9 +82,15 @@ test('blocks unauthenticated or application-unauthorized Identity input', () => 
   assert.equal(assessKnowledgeAuthorizationInput(record, unauthorized, now).identity.reason, 'application_operation_not_authorized')
 })
 
-test('blocks expired Identity authorization input', () => {
-  const value = input({ identity: { expiresAt: '2026-08-30T20:00:00.000Z' } })
-  assert.equal(assessKnowledgeAuthorizationInput(record, value, now).identity.reason, 'identity_authorization_expired')
+test('blocks expired Identity authorization input and rejects invalid time ordering', () => {
+  const expired = input({ identity: { expiresAt: '2026-08-30T20:00:00.000Z' } })
+  assert.equal(assessKnowledgeAuthorizationInput(record, expired, now).identity.reason, 'identity_authorization_expired')
+
+  const future = input({ identity: { observedAt: '2026-08-30T20:31:00.000Z' } })
+  assert.throws(() => assessKnowledgeAuthorizationInput(record, future, now), /observedAt cannot be in the future/)
+
+  const reversed = input({ identity: { observedAt: '2026-08-30T20:29:00.000Z', expiresAt: '2026-08-30T20:28:00.000Z' } })
+  assert.throws(() => assessKnowledgeAuthorizationInput(record, reversed, now), /expiresAt must be later than observedAt/)
 })
 
 test('honors Privacy Shield deny and require-user-decision outcomes', () => {
@@ -127,6 +133,27 @@ test('blocks mismatched Privacy Shield resource, operation, requester, destinati
   const expired = input()
   expired.privacy.decision.expires_at = '2026-08-30T20:00:00.000Z'
   assert.equal(assessKnowledgeAuthorizationInput(record, expired, now).privacy.reason, 'privacy_decision_expired')
+})
+
+test('fails closed when a service or agent is wrapped as an application requester without a valid actor binding', () => {
+  const service = input({
+    identity: { actor: { id: 'service-1', type: 'service' } },
+  })
+  service.privacy.request.requester = { id: 'goreecloud-ai', type: 'application' }
+  assert.equal(assessKnowledgeAuthorizationInput(record, service, now).privacy.reason, 'privacy_requester_actor_mismatch')
+
+  const application = input({
+    identity: { actor: { id: 'goreecloud-ai', type: 'application' } },
+  })
+  application.privacy.request.requester = { id: 'goreecloud-ai', type: 'application' }
+  const assessment = assessKnowledgeAuthorizationInput(record, application, now)
+  assert.equal(assessment.privacy.status, 'satisfied')
+})
+
+test('requires Privacy Shield effective_scope as part of the current decision contract', () => {
+  const malformed = input()
+  delete malformed.privacy.decision.effective_scope
+  assert.throws(() => assessKnowledgeAuthorizationInput(record, malformed, now), /effective_scope is required/)
 })
 
 test('rejects malformed inputs instead of manufacturing authorization state', () => {
