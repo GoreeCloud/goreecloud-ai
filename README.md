@@ -44,7 +44,7 @@ The repository includes:
 - Passive post-Wardveil text extraction for released UTF-8 text, Markdown, and JSON with source-digest revalidation and private derived records.
 - Read-only knowledge-eligibility assessment that never authorizes indexing, retrieval, or model context.
 - Bounded non-persistent knowledge-authorization assessment for supplied GoreeCloud Identity/application context plus the current Privacy Shield decision contract.
-- Strict resource, operation, actor, request, processing-zone, destination, obligation, and expiration binding with Privacy Shield `DENY`/`REQUIRE_USER_DECISION` semantics preserved.
+- Strict resource, operation, actor, request, processing-zone, destination, obligation, decision-expiration, and optional request-retention-expiration validation with Privacy Shield `DENY`/`REQUIRE_USER_DECISION` semantics preserved.
 - Explicit source-trust boundary: supplied authorization JSON is not production-trusted, creates no durable authorization, and cannot execute a knowledge stage while authenticated adapters are absent.
 - Independent Python Wardveil artifact-intake reference contract and validation suite.
 - Opt-in live runtime validator for first-party service health/model discovery and optional streamed Ollama chat through the GoreeCloud AI backend.
@@ -120,7 +120,7 @@ Extraction is not chunking, embedding, indexing, retrieval, RAG eligibility, mod
 
 These are GoreeCloud AI application-local operation identifiers. They are not new central GoreeCloud Identity scopes and are not additions to the canonical Privacy Shield capability registry.
 
-The Identity input must bind an authenticated actor, valid observation/expiry window, exact attachment resource ID, and GoreeCloud AI application permission. Privacy input is structurally aligned to the current Privacy Shield decision contract and checks request/decision binding, resource, operation, requester/acting user, processing zone, destination, permitted operations, obligations, and expiration.
+The Identity input must bind an authenticated actor, valid observation/expiry window, exact attachment resource ID, and GoreeCloud AI application permission. Privacy input is structurally aligned to the current Privacy Shield decision contract and checks request/decision binding, resource, operation, requester/acting user, processing zone, destination, permitted operations, obligations, decision expiration, and optional request-retention expiration. A malformed optional request-retention expiration fails closed.
 
 Privacy Shield `DENY` blocks; `REQUIRE_USER_DECISION` remains pending; `ALLOW`/`ALLOW_WITH_CONSTRAINTS` can only become structurally satisfied when checked bindings agree.
 
@@ -228,7 +228,7 @@ Successful source checks or runtime validation do not establish Wardveil/Privacy
 
 ## Platform-system acceptance
 
-- **Glaze UI:** mandatory target is current Stable Glaze UI 2.1.0. GoreeCloud AI is migration-required from historical 2.0.0 until product-specific 2.1.0 conformance is complete.
+- **Glaze UI:** the current authoritative Stable consumer target is **GLAZE UI V1.1 / 1.1.0**. GoreeCloud AI remains migration/reconciliation-required until exact-revision product-specific conformance evidence exists. Existing 2.x-labeled source is historical migration input and is not current conformance evidence.
 - **Wardveil Security:** source trust enforcement exists; deployed authenticated Scan transport and AI consumer production acceptance remain pending.
 - **Privacy Shield:** current decision fields/outcomes are structurally consumed, but authenticated runtime enforcement/capability/evidence and AI consumer acceptance remain pending. Supplied JSON cannot create Privacy Shield authority.
 - **Everkeep:** attachment/extraction/future knowledge retention, export, backup, restore, recovery, preservation, portability, and succession remain pending application-specific acceptance.
@@ -241,7 +241,7 @@ Successful source checks or runtime validation do not establish Wardveil/Privacy
 2. Implement authenticated GoreeCloud AI-to-Wardveil Scan transport and controlled clean/malicious/unavailable acceptance.
 3. Implement authenticated GoreeCloud Identity sessions/service identities plus GoreeCloud AI resource/Workspace authorization.
 4. Implement authenticated Privacy Shield PEP/PDP/capability/evidence integration for knowledge operations.
-5. Migrate the application to Stable Glaze UI 2.1.0 and collect exact consumer conformance evidence.
+5. Reconcile and migrate the application to GLAZE UI V1.1 / 1.1.0 and collect exact consumer conformance evidence.
 6. Add separately reviewed parsers/provenance only where security/privacy boundaries are defined.
 7. Implement chunking, embeddings, indexing, retrieval, citations, and native RAG only after authoritative Identity/application/Privacy gates exist.
 8. Integrate GoreeCloud Search for current-information research.
