@@ -14,7 +14,7 @@
 - Read-only knowledge-eligibility assessment that reports Wardveil, extraction, Identity/application, Privacy Shield, indexing, retrieval, and model-context gates while keeping all knowledge-use execution eligibility false.
 - Bounded `POST /api/files/:id/knowledge-authorization-assessment` consumer for supplied GoreeCloud Identity/application-authorization context plus the current Privacy Shield decision contract.
 - Application-local knowledge operation identifiers with strict resource/operation/actor/time binding rather than fabricated GoreeCloud-wide Identity scopes.
-- Privacy Shield `DENY`, `REQUIRE_USER_DECISION`, `ALLOW`, and `ALLOW_WITH_CONSTRAINTS` handling with request/decision, zone, destination, operation, acting-user, obligation, and expiration checks.
+- Privacy Shield `DENY`, `REQUIRE_USER_DECISION`, `ALLOW`, and `ALLOW_WITH_CONSTRAINTS` handling with request/decision, zone, destination, operation, acting-user, obligation, decision-expiration, and optional request-retention-expiration checks.
 - Explicit non-authority markers: supplied authorization input is not production-trusted, is not persisted as authorization, and cannot authorize execution while authenticated runtime adapters are absent.
 - Independent Python Wardveil reference contract and validation suite.
 - Opt-in live application/runtime validation for service health, Ollama discovery, and an explicitly selected streamed model request through the GoreeCloud AI backend.
@@ -25,7 +25,7 @@
 
 - Recorded live application-to-Ollama validation against the intended environment.
 - Authenticated GoreeCloud AI-to-Wardveil Scan transport and target-environment clean/malicious/unavailable validation.
-- Migration to current Stable Glaze UI 2.1.0 and exact-revision consumer conformance evidence; prior 2.0.0 alignment is historical.
+- Migration/reconciliation to the current authoritative Stable **GLAZE UI V1.1 / 1.1.0** consumer target and exact-revision product conformance evidence. Existing 2.x-labeled source is historical migration input, not current conformance.
 - Authenticated GoreeCloud Identity session/service integration, multi-user persistence, and application-owned Workspace/resource authorization.
 - Authenticated Privacy Shield enforcement/decision/capability/evidence integration for file, extraction, conversation, model, research, and external-processing operations.
 - Everkeep backup, restore, retention, export, preservation, portability, and application recovery evidence, including future derived knowledge state.
