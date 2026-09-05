@@ -107,7 +107,7 @@ The supplied Identity/application context must include an authenticated actor, v
 
 ### Privacy Shield decision input
 
-The supplied Privacy Shield request/decision is checked against the current Privacy Shield authorization decision contract. The assessment checks request/decision binding, attachment resource ID, operation, requester/acting-user binding, processing zone, destination, permitted operations, decision expiration, and obligations.
+The supplied Privacy Shield request/decision is checked against the current Privacy Shield authorization decision contract. The assessment checks request/decision binding, attachment resource ID, operation, requester/acting-user binding, processing zone, destination, permitted operations, decision expiration, optional request-retention expiration, and obligations. When a request-retention expiration is supplied, it must be a valid date-time or the assessment fails closed.
 
 Outcome handling is preserved:
 
@@ -152,7 +152,7 @@ A passing runtime validation proves only the application/runtime path exercised 
 
 ## Glaze UI Migration State
 
-Current Stable Glaze UI is **2.1.0**. GoreeCloud AI previously targeted 2.0.0, which is now a historical Stable baseline. GoreeCloud AI is migration-required until its user interface targets 2.1.0 and completes application-specific exact-revision conformance/acceptance. Design-system promotion does not automatically promote this application.
+The current authoritative Stable consumer target is **GLAZE UI V1.1 / 1.1.0**. Existing 2.x-labeled source is historical migration input and does not establish current conformance. GoreeCloud AI remains migration/reconciliation-required until its interface targets the accepted 1.1.0 revision and completes application-specific exact-revision conformance/acceptance. Design-system promotion does not automatically promote this application.
 
 ## Privacy and External Processing
 
@@ -176,7 +176,7 @@ The Draft branch still requires, among other evidence:
 - GoreeCloud Mesh integration where required;
 - additional safe parser decisions before broader ingestion;
 - actual provenance/chunking/embeddings/indexing/retrieval/RAG/model-context execution with permission and privacy enforcement;
-- migration to Stable Glaze UI 2.1.0 and exact current consumer conformance evidence;
+- migration/reconciliation to GLAZE UI V1.1 / 1.1.0 and exact current consumer conformance evidence;
 - deployment and broader production-readiness validation.
 
 Do not represent successful source checks, a knowledge-eligibility/authorization assessment, or local runtime validation as Stable or production-ready evidence.
