@@ -169,6 +169,42 @@ test('validates optional Privacy Shield request retention expiry', () => {
   )
 })
 
+test('rejects unknown Privacy Shield fields where the authoritative contract is closed', () => {
+  const requestField = input()
+  requestField.privacy.request.unrecognized = true
+  assert.throws(() => assessKnowledgeAuthorizationInput(record, requestField, now), /request contains unsupported fields/)
+
+  const requesterField = input()
+  requesterField.privacy.request.requester.unrecognized = true
+  assert.throws(() => assessKnowledgeAuthorizationInput(record, requesterField, now), /requester contains unsupported fields/)
+
+  const retentionField = input()
+  retentionField.privacy.request.retention.unrecognized = true
+  assert.throws(() => assessKnowledgeAuthorizationInput(record, retentionField, now), /request retention contains unsupported fields/)
+
+  const decisionField = input()
+  decisionField.privacy.decision.unrecognized = true
+  assert.throws(() => assessKnowledgeAuthorizationInput(record, decisionField, now), /decision contains unsupported fields/)
+})
+
+test('validates known optional Privacy Shield field types instead of accepting malformed values', () => {
+  const disclosure = input()
+  disclosure.privacy.request.external_disclosure = 'false'
+  assert.throws(() => assessKnowledgeAuthorizationInput(record, disclosure, now), /external_disclosure is invalid/)
+
+  const context = input()
+  context.privacy.request.context = []
+  assert.throws(() => assessKnowledgeAuthorizationInput(record, context, now), /context is invalid/)
+
+  const consentRequired = input()
+  consentRequired.privacy.decision.consent_required = 'false'
+  assert.throws(() => assessKnowledgeAuthorizationInput(record, consentRequired, now), /consent_required is invalid/)
+
+  const policyReferences = input()
+  policyReferences.privacy.decision.policy_references = ['policy-1', 2]
+  assert.throws(() => assessKnowledgeAuthorizationInput(record, policyReferences, now), /policy_references is invalid/)
+})
+
 test('rejects malformed inputs instead of manufacturing authorization state', () => {
   assert.throws(() => assessKnowledgeAuthorizationInput(record, { operation: 'not-supported' }, now), (error) => {
     assert.equal(error.status, 400)
