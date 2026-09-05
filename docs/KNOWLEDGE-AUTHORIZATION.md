@@ -27,7 +27,7 @@ This is still not production Identity integration. The current application has n
 
 ## Privacy Shield boundary
 
-The assessment consumes fields aligned to the current `privacy-shield.decision.schema.json` request/response contract, including requester, resource, operation, purpose, processing zone, destination, retention, decision outcome, permitted operations/destinations, obligations, and expiration where present.
+The assessment consumes fields aligned to the current `privacy-shield.decision.schema.json` request/response contract, including requester, resource, operation, purpose, processing zone, destination, retention, decision outcome, permitted operations/destinations, obligations, and expiration where present. If request `retention.expires_at` is present and non-null, it must be a valid date-time; malformed values fail closed.
 
 Current Privacy Shield outcomes are preserved:
 
