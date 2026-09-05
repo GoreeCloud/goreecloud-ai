@@ -10,6 +10,41 @@ const PRIVACY_REQUESTER_TYPES = new Set(['application', 'service', 'user', 'agen
 const PRIVACY_ZONES = new Set(['local', 'private_goreecloud', 'trusted_service', 'external'])
 const PRIVACY_RETENTION_MODES = new Set(['none', 'session', 'temporary', 'user_defined', 'application_defined', 'organizational', 'permanent'])
 const PRIVACY_OUTCOMES = new Set(['ALLOW', 'DENY', 'ALLOW_WITH_CONSTRAINTS', 'REQUIRE_USER_DECISION'])
+const PRIVACY_REQUEST_KEYS = new Set([
+  'request_id',
+  'requester',
+  'resource',
+  'operation',
+  'purpose',
+  'processing_zone',
+  'destination',
+  'retention',
+  'external_disclosure',
+  'context',
+  'delegation_chain',
+  'consent_reference',
+  'manifest_reference',
+  'wardveil_evidence_reference',
+])
+const PRIVACY_REQUESTER_KEYS = new Set(['id', 'type', 'acting_user'])
+const PRIVACY_RETENTION_KEYS = new Set(['mode', 'expires_at'])
+const PRIVACY_DECISION_KEYS = new Set([
+  'decision_id',
+  'request_id',
+  'outcome',
+  'reason_code',
+  'effective_scope',
+  'permitted_operations',
+  'processing_zone',
+  'permitted_destinations',
+  'retention',
+  'expires_at',
+  'consent_required',
+  'obligations',
+  'policy_references',
+  'capability_token_reference',
+  'evidence_reference',
+])
 
 function invalid(message) {
   throw Object.assign(new Error(message), { status: 400, code: 'invalid_knowledge_authorization_input' })
@@ -23,6 +58,18 @@ function dateMs(value) {
   if (!nonEmpty(value)) return null
   const parsed = Date.parse(value)
   return Number.isFinite(parsed) ? parsed : null
+}
+
+function rejectUnknownKeys(value, allowed, message) {
+  if (Object.keys(value).some((key) => !allowed.has(key))) invalid(message)
+}
+
+function optionalStringOrNull(value) {
+  return value === undefined || value === null || typeof value === 'string'
+}
+
+function optionalStringArray(value) {
+  return value === undefined || (Array.isArray(value) && value.every((entry) => typeof entry === 'string'))
 }
 
 function identityGate(record, operation, identity, nowMs) {
@@ -60,8 +107,10 @@ function identityGate(record, operation, identity, nowMs) {
 
 function validatePrivacyRequest(request) {
   if (!request || typeof request !== 'object' || Array.isArray(request)) invalid('Privacy Shield request is required')
+  rejectUnknownKeys(request, PRIVACY_REQUEST_KEYS, 'Privacy Shield request contains unsupported fields')
   if (!nonEmpty(request.request_id)) invalid('Privacy Shield request_id is required')
   if (!request.requester || typeof request.requester !== 'object' || Array.isArray(request.requester)) invalid('Privacy Shield requester is required')
+  rejectUnknownKeys(request.requester, PRIVACY_REQUESTER_KEYS, 'Privacy Shield requester contains unsupported fields')
   if (!nonEmpty(request.requester.id) || !PRIVACY_REQUESTER_TYPES.has(request.requester.type)) invalid('Privacy Shield requester is invalid')
   if (request.requester.acting_user !== undefined && request.requester.acting_user !== null && !nonEmpty(request.requester.acting_user)) invalid('Privacy Shield acting_user is invalid')
   if (!request.resource || typeof request.resource !== 'object' || Array.isArray(request.resource)) invalid('Privacy Shield resource is required')
@@ -69,21 +118,34 @@ function validatePrivacyRequest(request) {
   if (!nonEmpty(request.operation) || !nonEmpty(request.purpose)) invalid('Privacy Shield operation and purpose are required')
   if (!PRIVACY_ZONES.has(request.processing_zone) || !nonEmpty(request.destination)) invalid('Privacy Shield processing zone or destination is invalid')
   if (!request.retention || typeof request.retention !== 'object' || Array.isArray(request.retention) || !PRIVACY_RETENTION_MODES.has(request.retention.mode)) invalid('Privacy Shield retention is invalid')
+  rejectUnknownKeys(request.retention, PRIVACY_RETENTION_KEYS, 'Privacy Shield request retention contains unsupported fields')
   if (request.retention.expires_at !== undefined && request.retention.expires_at !== null && dateMs(request.retention.expires_at) === null) invalid('Privacy Shield request retention expires_at is invalid')
+  if (request.external_disclosure !== undefined && typeof request.external_disclosure !== 'boolean') invalid('Privacy Shield external_disclosure is invalid')
+  if (request.context !== undefined && (!request.context || typeof request.context !== 'object' || Array.isArray(request.context))) invalid('Privacy Shield context is invalid')
+  if (!optionalStringArray(request.delegation_chain)) invalid('Privacy Shield delegation_chain is invalid')
+  if (!optionalStringOrNull(request.consent_reference)) invalid('Privacy Shield consent_reference is invalid')
+  if (!optionalStringOrNull(request.manifest_reference)) invalid('Privacy Shield manifest_reference is invalid')
+  if (!optionalStringOrNull(request.wardveil_evidence_reference)) invalid('Privacy Shield wardveil_evidence_reference is invalid')
 }
 
 function validatePrivacyDecision(decision) {
   if (!decision || typeof decision !== 'object' || Array.isArray(decision)) invalid('Privacy Shield decision is required')
+  rejectUnknownKeys(decision, PRIVACY_DECISION_KEYS, 'Privacy Shield decision contains unsupported fields')
   if (!nonEmpty(decision.decision_id) || !nonEmpty(decision.request_id) || !PRIVACY_OUTCOMES.has(decision.outcome) || !nonEmpty(decision.reason_code)) {
     invalid('Privacy Shield decision identity is invalid')
   }
   if (!Object.hasOwn(decision, 'effective_scope')) invalid('Privacy Shield effective_scope is required')
+  if (decision.effective_scope !== null && typeof decision.effective_scope !== 'object' && typeof decision.effective_scope !== 'string') invalid('Privacy Shield effective_scope is invalid')
   if (!Array.isArray(decision.permitted_operations) || !decision.permitted_operations.every(nonEmpty)) invalid('Privacy Shield permitted_operations is invalid')
   if (!PRIVACY_ZONES.has(decision.processing_zone)) invalid('Privacy Shield decision processing_zone is invalid')
   if (!Array.isArray(decision.permitted_destinations) || !decision.permitted_destinations.every(nonEmpty)) invalid('Privacy Shield permitted_destinations is invalid')
   if (!decision.retention || typeof decision.retention !== 'object' || Array.isArray(decision.retention)) invalid('Privacy Shield decision retention is invalid')
   if (!Array.isArray(decision.obligations) || !decision.obligations.every(nonEmpty)) invalid('Privacy Shield obligations are invalid')
   if (decision.expires_at !== undefined && decision.expires_at !== null && dateMs(decision.expires_at) === null) invalid('Privacy Shield decision expires_at is invalid')
+  if (decision.consent_required !== undefined && typeof decision.consent_required !== 'boolean') invalid('Privacy Shield consent_required is invalid')
+  if (!optionalStringArray(decision.policy_references)) invalid('Privacy Shield policy_references is invalid')
+  if (!optionalStringOrNull(decision.capability_token_reference)) invalid('Privacy Shield capability_token_reference is invalid')
+  if (!optionalStringOrNull(decision.evidence_reference)) invalid('Privacy Shield evidence_reference is invalid')
 }
 
 function requesterMatchesActor(requester, actor) {
