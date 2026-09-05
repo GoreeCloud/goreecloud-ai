@@ -29,6 +29,8 @@ This is still not production Identity integration. The current application has n
 
 The assessment consumes fields aligned to the current `privacy-shield.decision.schema.json` request/response contract, including requester, resource, operation, purpose, processing zone, destination, retention, decision outcome, permitted operations/destinations, obligations, and expiration where present. If request `retention.expires_at` is present and non-null, it must be a valid date-time; malformed values fail closed.
 
+The current Privacy Shield request contract is closed at the request, requester, and request-retention object boundaries, and the response contract is closed at the decision object boundary. The assessor therefore rejects unknown properties at those same boundaries rather than silently accepting schema drift. Known optional fields such as `external_disclosure`, `context`, `delegation_chain`, consent/manifest/Wardveil references, `consent_required`, policy references, and capability/evidence references are type-checked when supplied. The resource object remains extensible as allowed by the authoritative schema, and decision retention remains an object because the current response schema does not further constrain its internal properties.
+
 Current Privacy Shield outcomes are preserved:
 
 - `DENY` — blocked;
