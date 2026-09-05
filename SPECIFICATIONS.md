@@ -40,7 +40,7 @@ GoreeCloud Identity's current architecture establishes authenticated identity/cl
 
 Identity input must be time-valid, authenticated, resource-bound, and paired with GoreeCloud AI application authorization permitting the selected operation.
 
-Privacy input is structurally aligned to the current Privacy Shield decision contract. Request/decision binding, resource, operation, requester/acting-user, processing zone, destination, permitted operations, expiration, and obligations are checked. `DENY` blocks. `REQUIRE_USER_DECISION` remains pending. `ALLOW` and `ALLOW_WITH_CONSTRAINTS` can become structurally satisfied only when checked constraints agree.
+Privacy input is structurally aligned to the current Privacy Shield decision contract. Request/decision binding, resource, operation, requester/acting-user, processing zone, destination, permitted operations, decision expiration, optional request-retention expiration, and obligations are checked. Malformed optional retention expiration fails closed. `DENY` blocks. `REQUIRE_USER_DECISION` remains pending. `ALLOW` and `ALLOW_WITH_CONSTRAINTS` can become structurally satisfied only when checked constraints agree.
 
 These local operation names are not new canonical Privacy Shield capability IDs. Privacy Shield capability-registry adoption remains separately governed.
 
@@ -66,7 +66,7 @@ A passing run proves only the runtime path exercised. It does not establish Gore
 
 ## Platform-system requirements
 
-- **Glaze UI:** current mandatory consumer target is Stable Glaze UI 2.1.0. GoreeCloud AI is migration-required from the historical 2.0.0 target until exact-revision 2.1.0 consumer acceptance is completed.
+- **Glaze UI:** current mandatory consumer target is Stable **GLAZE UI V1.1 / 1.1.0**. GoreeCloud AI remains migration/reconciliation-required until exact-revision 1.1.0 consumer acceptance is completed; existing 2.x-labeled source is historical migration input and is not current conformance evidence.
 - **Wardveil Security:** source-level artifact trust enforcement exists, but authenticated deployed Scan transport and application production acceptance remain pending. GoreeCloud AI does not connect directly to ClamAV.
 - **Privacy Shield:** the current decision contract is consumed for structural assessment, but authenticated runtime enforcement, trusted capabilities/evidence, durable state, and AI consumer acceptance remain pending. A structurally satisfied supplied decision is not production authority.
 - **Everkeep:** export, backup, restore, preservation, portability, succession, attachment/extraction/derived-knowledge lifecycle, and application recovery acceptance remain pending.
@@ -79,4 +79,4 @@ CI validates application TypeScript, server syntax including authorization/eligi
 
 ## Stable boundary
 
-GoreeCloud AI is not Stable or production-ready. Live Ollama/Wardveil interoperability, migration to current Stable Glaze UI 2.1.0 and consumer evidence, Identity-backed multi-user/application authorization, Privacy Shield runtime acceptance, Everkeep lifecycle/recovery, Mesh integration, safe parsers/RAG stages, and broader runtime/deployment evidence remain required.
+GoreeCloud AI is not Stable or production-ready. Live Ollama/Wardveil interoperability, migration/reconciliation to current Stable GLAZE UI V1.1 / 1.1.0 and consumer evidence, Identity-backed multi-user/application authorization, Privacy Shield runtime acceptance, Everkeep lifecycle/recovery, Mesh integration, safe parsers/RAG stages, and broader runtime/deployment evidence remain required.
