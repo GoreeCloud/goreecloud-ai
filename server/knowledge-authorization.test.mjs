@@ -156,6 +156,19 @@ test('requires Privacy Shield effective_scope as part of the current decision co
   assert.throws(() => assessKnowledgeAuthorizationInput(record, malformed, now), /effective_scope is required/)
 })
 
+test('validates optional Privacy Shield request retention expiry', () => {
+  const valid = input()
+  valid.privacy.request.retention.expires_at = '2026-08-31T00:00:00.000Z'
+  assert.equal(assessKnowledgeAuthorizationInput(record, valid, now).privacy.status, 'satisfied')
+
+  const malformed = input()
+  malformed.privacy.request.retention.expires_at = 'not-a-date'
+  assert.throws(
+    () => assessKnowledgeAuthorizationInput(record, malformed, now),
+    /request retention expires_at is invalid/,
+  )
+})
+
 test('rejects malformed inputs instead of manufacturing authorization state', () => {
   assert.throws(() => assessKnowledgeAuthorizationInput(record, { operation: 'not-supported' }, now), (error) => {
     assert.equal(error.status, 400)
