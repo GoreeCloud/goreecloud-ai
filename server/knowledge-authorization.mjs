@@ -69,6 +69,7 @@ function validatePrivacyRequest(request) {
   if (!nonEmpty(request.operation) || !nonEmpty(request.purpose)) invalid('Privacy Shield operation and purpose are required')
   if (!PRIVACY_ZONES.has(request.processing_zone) || !nonEmpty(request.destination)) invalid('Privacy Shield processing zone or destination is invalid')
   if (!request.retention || typeof request.retention !== 'object' || Array.isArray(request.retention) || !PRIVACY_RETENTION_MODES.has(request.retention.mode)) invalid('Privacy Shield retention is invalid')
+  if (request.retention.expires_at !== undefined && request.retention.expires_at !== null && dateMs(request.retention.expires_at) === null) invalid('Privacy Shield request retention expires_at is invalid')
 }
 
 function validatePrivacyDecision(decision) {
