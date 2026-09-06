@@ -93,6 +93,17 @@ test('blocks expired Identity authorization input and rejects invalid time order
   assert.throws(() => assessKnowledgeAuthorizationInput(record, reversed, now), /expiresAt must be later than observedAt/)
 })
 
+test('rejects a non-finite assessment clock instead of bypassing temporal gates', () => {
+  assert.throws(
+    () => assessKnowledgeAuthorizationInput(record, input(), Number.NaN),
+    /assessment time must be finite/,
+  )
+  assert.throws(
+    () => assessKnowledgeAuthorizationInput(record, input(), Number.POSITIVE_INFINITY),
+    /assessment time must be finite/,
+  )
+})
+
 test('honors Privacy Shield deny and require-user-decision outcomes', () => {
   const denied = input()
   denied.privacy.decision.outcome = 'DENY'
@@ -133,6 +144,22 @@ test('blocks mismatched Privacy Shield resource, operation, requester, destinati
   const expired = input()
   expired.privacy.decision.expires_at = '2026-08-30T20:00:00.000Z'
   assert.equal(assessKnowledgeAuthorizationInput(record, expired, now).privacy.reason, 'privacy_decision_expired')
+})
+
+test('blocks a structurally valid Privacy Shield request whose retention window already expired', () => {
+  const expired = input()
+  expired.privacy.request.retention.expires_at = '2026-08-30T20:00:00.000Z'
+  const assessment = assessKnowledgeAuthorizationInput(record, expired, now)
+  assert.deepEqual(assessment.privacy, {
+    status: 'blocked',
+    reason: 'privacy_request_retention_expired',
+  })
+  assert.equal(assessment.persistentAuthorizationCreated, false)
+  assert.equal(assessment.executionAuthorized, false)
+
+  const future = input()
+  future.privacy.request.retention.expires_at = '2026-08-31T00:00:00.000Z'
+  assert.equal(assessKnowledgeAuthorizationInput(record, future, now).privacy.status, 'satisfied')
 })
 
 test('fails closed when a service or agent is wrapped as an application requester without a valid actor binding', () => {
