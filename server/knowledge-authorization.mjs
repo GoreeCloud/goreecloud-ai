@@ -167,6 +167,9 @@ function privacyGate(record, operation, privacy, identity, nowMs) {
   if (request.operation !== operation) return { status: 'blocked', reason: 'privacy_operation_mismatch' }
   if (decision.request_id !== request.request_id) return { status: 'blocked', reason: 'privacy_request_binding_mismatch' }
   if (!requesterMatchesActor(request.requester, identity.actor)) return { status: 'blocked', reason: 'privacy_requester_actor_mismatch' }
+  if (request.retention.expires_at && Date.parse(request.retention.expires_at) <= nowMs) {
+    return { status: 'blocked', reason: 'privacy_request_retention_expired' }
+  }
 
   if (decision.outcome === 'DENY') {
     return { status: 'blocked', authority: 'Privacy Shield', reason: decision.reason_code }
@@ -193,6 +196,7 @@ function privacyGate(record, operation, privacy, identity, nowMs) {
 
 export function assessKnowledgeAuthorizationInput(record, value, nowMs = Date.now()) {
   if (!record) invalid('attachment record is required')
+  if (!Number.isFinite(nowMs)) invalid('authorization assessment time must be finite')
   if (!value || typeof value !== 'object' || Array.isArray(value)) invalid('knowledge authorization input must be an object')
   if (!OPERATION_SET.has(value.operation)) invalid('unsupported GoreeCloud AI knowledge operation')
 
