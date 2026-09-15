@@ -47,6 +47,12 @@ This repository must use Platform Contract `0.2` with exactly seven Integral Pla
 
 The current Stable Glaze UI target is `1.4.1`. Older GoreeCloud AI references to Glaze UI `1.1.0` or experimental `2.x` targets are historical/stale current-state material and must be reconciled without relabeling old evidence as current acceptance.
 
+## Validation authority
+
+`.github/workflows/validate.yml` checks the exact pull-request head for application type safety, server syntax, native server tests, production client build, Wardveil reference behavior, integration-contract validation, and Python compilation. `.github/workflows/platform-contract.yml` independently validates `goreecloud.platform.yaml` against the governance-aligned Contract 0.2 implementation.
+
+While central GoreeCloud/GoreeCloud PR #33 remains unmerged, the Platform Contract workflow is explicitly pinned to corrective candidate `822e5fa65f1f253cf681f3dc6a0150e5949f6072`. A successful workflow result belongs only to the exact evaluated source revision; predecessor success never transfers across a source change.
+
 ## Release boundary
 
 Keep Draft PR #1 in Development until exact-head validation and all applicable runtime, platform-system, privacy, security, recovery, accessibility, deployment, release, and representative acceptance gates are complete. Merge, release, and Stable are separate decisions.
