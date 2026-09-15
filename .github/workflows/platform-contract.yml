@@ -1,0 +1,33 @@
+name: GoreeCloud AI Platform Contract
+
+on:
+  pull_request:
+    paths:
+      - 'goreecloud.platform.yaml'
+      - 'PRIVACY POLICY.md'
+      - 'SECURITY.md'
+      - 'NOTES.md'
+      - 'FEATURE-ROADMAP.md'
+      - '.github/workflows/platform-contract.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'goreecloud.platform.yaml'
+      - 'PRIVACY POLICY.md'
+      - 'SECURITY.md'
+      - 'NOTES.md'
+      - 'FEATURE-ROADMAP.md'
+      - '.github/workflows/platform-contract.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  platform-contract:
+    # Temporary candidate pin while central GoreeCloud/GoreeCloud corrective PR #33
+    # remains unmerged. Replace with the authoritative merged revision after that
+    # transition is verified; do not silently follow conflicting central main.
+    uses: GoreeCloud/GoreeCloud/.github/workflows/reusable-platform-manifest.yml@822e5fa65f1f253cf681f3dc6a0150e5949f6072
+    with:
+      manifest-path: goreecloud.platform.yaml
