@@ -6,6 +6,7 @@
 - Backend-owned Ollama model discovery and streaming chat boundary.
 - Persistent conversations with rename, edit/resubmit, regeneration, branching, and explicit branch lineage.
 - Stable GoreeCloud model roles mapped to replaceable installed runtime models.
+- Development-only approved 13-role model routing selector and bounded backend preflight with local-policy file and loopback discovery adapters; not wired to inference, authenticated administration, or platform-system decisions.
 - Native Workspace persistence for instructions, default model role, file references, knowledge placeholders, tools, and research preferences.
 - Private attachment staging, restrictive permissions, SHA-256 binding, metadata records, quotas, storage usage, and deletion/reference reconciliation.
 - Node-native Wardveil artifact trust gate with current authoritative clean-evidence checks, post-scan digest verification, fail-closed unavailable/unknown behavior, and non-destructive quarantine handoff state.
@@ -18,14 +19,14 @@
 - Explicit non-authority markers: supplied authorization input is not production-trusted, is not persisted as authorization, and cannot authorize execution while authenticated runtime adapters are absent.
 - Independent Python Wardveil reference contract and validation suite.
 - Opt-in live application/runtime validation for service health, Ollama discovery, and an explicitly selected streamed model request through the GoreeCloud AI backend.
-- Root user manual plus a synchronized central GoreeCloud User Manuals copy.
+- Repository-root USER-MANUAL.md as the sole authoritative user manual under the current manual-storage standard. A former Drive-side synchronized manual is historical, not current authority.
 - Unified GoreeCloud branding authority reference.
 
 ## Under active development
 
 - Recorded live application-to-Ollama validation against the intended environment.
 - Authenticated GoreeCloud AI-to-Wardveil Scan transport and target-environment clean/malicious/unavailable validation.
-- Migration/reconciliation to the current authoritative Stable **GLAZE UI V1.1 / 1.1.0** consumer target and exact-revision product conformance evidence. Existing 2.x-labeled source is historical migration input, not current conformance.
+- Migration/reconciliation to the current authoritative Stable **GLAZE UI V1.5 / 1.5.1** consumer target and exact-revision product conformance evidence. Existing 2.x-labeled source is historical migration input, not current conformance.
 - Authenticated GoreeCloud Identity session/service integration, multi-user persistence, and application-owned Workspace/resource authorization.
 - Authenticated Privacy Shield enforcement/decision/capability/evidence integration for file, extraction, conversation, model, research, and external-processing operations.
 - Everkeep backup, restore, retention, export, preservation, portability, and application recovery evidence, including future derived knowledge state.

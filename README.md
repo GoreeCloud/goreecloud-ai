@@ -12,6 +12,9 @@ Native GoreeCloud-owned AI application for private conversations, Workspaces, kn
 - [Competitive objectives](COMPETITIVE-OBJECTIVES.md)
 - [User manual](USER-MANUAL.md)
 - [Knowledge authorization boundary](docs/KNOWLEDGE-AUTHORIZATION.md)
+- [Development model routing](docs/MODEL_ROUTING.md)
+- [Bounded routing preflight](docs/MODEL_ROUTING_PREFLIGHT.md)
+- [Local-only routing adapters](docs/MODEL_ROUTING_LOCAL_ADAPTERS.md)
 - [Branding authority](BRANDING.md)
 
 ## Product boundary
@@ -37,6 +40,7 @@ The repository includes:
 - React + TypeScript + Vite client and responsive conversation shell.
 - Backend-owned Ollama discovery and streaming NDJSON chat with cancellation, timeout, and upstream failure isolation.
 - Stable GoreeCloud model-role abstraction mapped to replaceable installed Ollama models.
+- Development-only approved 13-role model selector, bounded server-side routing preflight, private local policy-file reader, and loopback-only model discovery. These components are not connected to live chat and grant no production inference authority.
 - Persistent conversations with rename, delete, edit/resubmit, regeneration, branching, and lineage metadata.
 - Native Workspaces with instructions, default model role, file references, knowledge/tool placeholders, and research preferences.
 - Private attachment staging, restrictive permissions, SHA-256 binding, quotas, storage usage, deletion, and Workspace reference reconciliation.
@@ -228,7 +232,7 @@ Successful source checks or runtime validation do not establish Wardveil/Privacy
 
 ## Platform-system acceptance
 
-- **Glaze UI:** the current authoritative Stable consumer target is **GLAZE UI V1.1 / 1.1.0**. GoreeCloud AI remains migration/reconciliation-required until exact-revision product-specific conformance evidence exists. Existing 2.x-labeled source is historical migration input and is not current conformance evidence.
+- **Glaze UI:** the current authoritative Stable consumer target is **GLAZE UI V1.5 / 1.5.1**. GoreeCloud AI remains migration/reconciliation-required until exact-revision product-specific conformance evidence exists. Existing 2.x-labeled source is historical migration input and is not current conformance evidence.
 - **Wardveil Security:** source trust enforcement exists; deployed authenticated Scan transport and AI consumer production acceptance remain pending.
 - **Privacy Shield:** current decision fields/outcomes are structurally consumed, but authenticated runtime enforcement/capability/evidence and AI consumer acceptance remain pending. Supplied JSON cannot create Privacy Shield authority.
 - **Everkeep:** attachment/extraction/future knowledge retention, export, backup, restore, recovery, preservation, portability, and succession remain pending application-specific acceptance.
@@ -241,7 +245,7 @@ Successful source checks or runtime validation do not establish Wardveil/Privacy
 2. Implement authenticated GoreeCloud AI-to-Wardveil Scan transport and controlled clean/malicious/unavailable acceptance.
 3. Implement authenticated GoreeCloud Identity sessions/service identities plus GoreeCloud AI resource/Workspace authorization.
 4. Implement authenticated Privacy Shield PEP/PDP/capability/evidence integration for knowledge operations.
-5. Reconcile and migrate the application to GLAZE UI V1.1 / 1.1.0 and collect exact consumer conformance evidence.
+5. Reconcile and migrate the application to GLAZE UI V1.5 / 1.5.1 and collect exact consumer conformance evidence.
 6. Add separately reviewed parsers/provenance only where security/privacy boundaries are defined.
 7. Implement chunking, embeddings, indexing, retrieval, citations, and native RAG only after authoritative Identity/application/Privacy gates exist.
 8. Integrate GoreeCloud Search for current-information research.

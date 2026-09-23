@@ -10,6 +10,10 @@ The active Milestone 0 foundation includes a React/TypeScript/Vite client, Node.
 
 The default development server intentionally has no fabricated Wardveil scanner transport. Without an authenticated scanner adapter, uploads remain private/staged and `unverified` rather than becoming eligible for extraction or AI context.
 
+## Development-only model routing
+
+The Draft source includes an additive 13-role approved-model selector, a bounded backend preflight requiring explicit backend-supplied policy and installed-model discovery adapters, a restrictive local policy-file reader, and literal-loopback-only runtime discovery. The preflight rejects invalid, unapproved, expired, unavailable, or aborted requests and marks any selected model `policyTrust: development-unverified` and `inferenceAuthorized: false`. The adapters are not imported by the live backend and do not change the existing manual chat path, confer authenticated administrative provenance, execute inference, or establish platform acceptance. See `docs/MODEL_ROUTING.md`, `docs/MODEL_ROUTING_PREFLIGHT.md`, and `docs/MODEL_ROUTING_LOCAL_ADAPTERS.md`.
+
 ## Attachment and extraction contract
 
 Attachment intake separates storage from security release. A clean result is accepted only when current authoritative Wardveil evidence is bound to the exact AI resource and SHA-256 digest; released bytes are re-hashed before release.
@@ -66,7 +70,7 @@ A passing run proves only the runtime path exercised. It does not establish Gore
 
 ## Platform-system requirements
 
-- **Glaze UI:** current mandatory consumer target is Stable **GLAZE UI V1.1 / 1.1.0**. GoreeCloud AI remains migration/reconciliation-required until exact-revision 1.1.0 consumer acceptance is completed; existing 2.x-labeled source is historical migration input and is not current conformance evidence.
+- **Glaze UI:** current mandatory consumer target is Stable **GLAZE UI V1.5 / 1.5.1**. GoreeCloud AI remains migration/reconciliation-required until exact-revision 1.5.1 consumer acceptance is completed; existing 2.x-labeled source is historical migration input and is not current conformance evidence.
 - **Wardveil Security:** source-level artifact trust enforcement exists, but authenticated deployed Scan transport and application production acceptance remain pending. GoreeCloud AI does not connect directly to ClamAV.
 - **Privacy Shield:** the current decision contract is consumed for structural assessment, but authenticated runtime enforcement, trusted capabilities/evidence, durable state, and AI consumer acceptance remain pending. A structurally satisfied supplied decision is not production authority.
 - **Everkeep:** export, backup, restore, preservation, portability, succession, attachment/extraction/derived-knowledge lifecycle, and application recovery acceptance remain pending.
@@ -79,4 +83,4 @@ CI validates application TypeScript, server syntax including authorization/eligi
 
 ## Stable boundary
 
-GoreeCloud AI is not Stable or production-ready. Live Ollama/Wardveil interoperability, migration/reconciliation to current Stable GLAZE UI V1.1 / 1.1.0 and consumer evidence, Identity-backed multi-user/application authorization, Privacy Shield runtime acceptance, Everkeep lifecycle/recovery, Mesh integration, safe parsers/RAG stages, and broader runtime/deployment evidence remain required.
+GoreeCloud AI is not Stable or production-ready. Live Ollama/Wardveil interoperability, migration/reconciliation to current Stable GLAZE UI V1.5 / 1.5.1 and consumer evidence, Identity-backed multi-user/application authorization, Privacy Shield runtime acceptance, Everkeep lifecycle/recovery, Mesh integration, safe parsers/RAG stages, and broader runtime/deployment evidence remain required.
