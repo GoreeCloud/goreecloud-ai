@@ -16,6 +16,8 @@ Native GoreeCloud-owned AI application for private conversations, Workspaces, kn
 - [Bounded routing preflight](docs/MODEL_ROUTING_PREFLIGHT.md)
 - [Local-only routing adapters](docs/MODEL_ROUTING_LOCAL_ADAPTERS.md)
 - [Opt-in developer model-routing diagnostic](docs/MODEL_ROUTING_DIAGNOSTIC.md)
+- [Development-only model capability and resource-fit guard](docs/MODEL_RESOURCE_READINESS.md)
+- [Opt-in local model-resource diagnostic](docs/MODEL_RESOURCE_DIAGNOSTIC.md)
 - [Branding authority](BRANDING.md)
 
 ## Product boundary
@@ -42,6 +44,7 @@ The repository includes:
 - Backend-owned Ollama discovery and streaming NDJSON chat with cancellation, timeout, and upstream failure isolation.
 - Stable GoreeCloud model-role abstraction mapped to replaceable installed Ollama models.
 - Development-only approved 13-role model selector, bounded server-side routing preflight, private local policy-file reader, and loopback-only model discovery. These components are not connected to live chat and grant no production inference authority.
+- Independent operator-declared model capability/resource-fit assessor and a separately opt-in Development-only local diagnostic. The latter samples free system RAM but does not measure GPU VRAM, establish real model capabilities, run inference, or grant authorization.
 - Persistent conversations with rename, delete, edit/resubmit, regeneration, branching, and lineage metadata.
 - Native Workspaces with instructions, default model role, file references, knowledge/tool placeholders, and research preferences.
 - Private attachment staging, restrictive permissions, SHA-256 binding, quotas, storage usage, deletion, and Workspace reference reconciliation.

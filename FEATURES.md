@@ -8,6 +8,8 @@
 - Stable GoreeCloud model roles mapped to replaceable installed runtime models.
 - Development-only approved 13-role model routing selector and bounded backend preflight with local-policy file and loopback discovery adapters; not wired to inference, authenticated administration, or platform-system decisions.
 - Explicit opt-in developer model-routing diagnostic that composes private local policy and loopback-only installed-model discovery, outputs sanitized selection state, and never invokes inference or grants authorization.
+- Pure Development-only resource candidate assessment for operator-declared model roles, modalities, token/context budgets, memory estimates/reserves and concurrency headroom. A candidate never authorizes inference, tools or runtime acceptance.
+- Separately opt-in local model-resource diagnostic that reads protected policy/profile files, discovers only literal-loopback installed model names, samples free system RAM, and outputs a sanitized non-authorizing candidate or refusal.
 - Native Workspace persistence for instructions, default model role, file references, knowledge placeholders, tools, and research preferences.
 - Private attachment staging, restrictive permissions, SHA-256 binding, metadata records, quotas, storage usage, and deletion/reference reconciliation.
 - Node-native Wardveil artifact trust gate with current authoritative clean-evidence checks, post-scan digest verification, fail-closed unavailable/unknown behavior, and non-destructive quarantine handoff state.
