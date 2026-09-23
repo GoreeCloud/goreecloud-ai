@@ -1,0 +1,88 @@
+# GoreeCloud AI — Changelogs
+
+This repository-local changelog records meaningful source, architecture, security, privacy, governance and documentation changes. Repository history and pull-request evidence remain authoritative for exact commits and checks; entries here summarize verified lifecycle events without implying deployment or Stable acceptance.
+
+## 2026-09-23
+
+### Added — approved model-routing Development foundation
+
+- Added a fail-closed approved-model selector for 13 functional roles, bounded backend preflight, protected local policy reader and literal-loopback model discovery.
+- Added opt-in read-only model-routing and model-resource diagnostics plus a pure capability/resource-fit candidate assessment.
+- Added an operator-initiated approved-model runtime validator that requires explicit Development opt-in, protected local policy, exact role/model approval and literal-loopback GoreeCloud AI; it performs one streamed request through the existing backend and emits sanitized evidence without model output or credentials.
+- Added native subprocess/loopback coverage for the approved-model runtime validator. Real model inference is never run in CI.
+
+### Changed — repository feature/changelog governance
+
+- Migrated legacy `FEATURE-ROADMAP.md` control into repository-native `IMPLEMENTED-FEATURES.md` and `PLANNED-FEATURES.md` while preserving FR-001 through FR-003.
+- Established this `CHANGELOGS.md` as the repository-local human-readable history required by current governance.
+- Retained `FEATURES.md` only as a convenience overview; canonical implemented/open feature state now lives in the mandatory feature-state files.
+
+### Validation state
+
+- The prior exact Draft head `a3b9742f7644d478b042c8ec7f590f1e5bb90c38` passed Validate GoreeCloud AI `35861922829` and Platform Contract `35861923871` before this continuation slice.
+- Any later commit recorded above requires its own exact-head CI evidence. These changes do not by themselves establish target-host production acceptance, authenticated platform integrations, deployment or Stable qualification.
+
+## 2026-09-17
+
+### Changed — Platform Contract 0.4 migration
+
+- Migrated the Draft line to Platform Contract 0.4 with exactly nine Integral Platform Systems.
+- Added GoreeCloud Policy and GoreeCloud Observability as applicable-but-blocked integration obligations.
+- Updated the then-current Stable Glaze UI consumer target and retained Development / Draft / nonconformant lifecycle state.
+
+## 2026-09-09
+
+### Added — legacy roadmap control
+
+- Added the now-retired repository `FEATURE-ROADMAP.md` and synchronized Drive roadmap control. Those records carried governance/reconciliation obligations rather than a complete product feature inventory.
+
+## 2026-09-07
+
+### Added — durable Development replay state
+
+- Added Development-only durable runtime-evidence use state using hashed evidence/request identifiers, restart persistence, replay detection and revocation handling.
+- Kept production trust, execution, indexing, retrieval and model-context authority explicitly false pending authenticated evidence producers and accepted adapters.
+
+## 2026-09-06
+
+### Added — runtime evidence readiness and binding foundations
+
+- Added fail-closed runtime-adapter readiness assessment for future Identity, Privacy Shield and Wardveil evidence.
+- Added strict runtime-evidence envelope binding and replay preconditions for authority/resource/operation/request/time semantics.
+- These helpers remained structural Development evidence and did not create production trust or execution authority.
+
+## 2026-09-05
+
+### Hardened — Privacy Shield structural and temporal validation
+
+- Added request-retention expiration validation and closed-schema checks for applicable Privacy Shield request/decision structures.
+- Hardened non-finite clock and expired-retention handling.
+- Preserved explicit non-authorizing outcomes and false downstream knowledge eligibility.
+
+## 2026-08-31
+
+### Added — knowledge authorization assessment
+
+- Added bounded non-persistent Identity/application and Privacy Shield authorization-input assessment.
+- Added strict actor, resource, operation and temporal binding while keeping persistent authorization and execution disabled.
+- Corrected an expired-authorization test fixture whose invalid timestamp ordering prevented the intended assertion; no production check was weakened.
+
+## 2026-08-30
+
+### Added — live runtime validation, safe extraction and repository records
+
+- Added the original opt-in runtime validator for application health, local model discovery and optional streamed chat through GoreeCloud AI.
+- Added Wardveil-gated passive text extraction for bounded UTF-8 plain text, Markdown and JSON with source-digest revalidation.
+- Added the repository specification, feature overview, benefits, competitive objectives and user manual.
+- Began Glaze UI migration work that was later superseded by newer Stable consumer targets.
+
+## 2026-08-27
+
+### Added — attachment lifecycle and trust foundations
+
+- Added private attachment staging, quotas, serialized mutations, Workspace reference cleanup and lifecycle safeguards.
+- Added native fail-closed Wardveil attachment trust enforcement and supporting tests/documentation.
+
+## Earlier foundation
+
+Earlier repository history establishes the initial GoreeCloud AI application, conversation/runtime and project foundations. Exact details remain recoverable in Git history. This changelog does not rewrite historical commit facts or treat later planned requirements as if they existed at repository inception.

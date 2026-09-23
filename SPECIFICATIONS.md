@@ -6,7 +6,7 @@ GoreeCloud AI is original GoreeCloud-owned AI application and orchestration soft
 
 ## Current development state
 
-The active Milestone 0 foundation includes a React/TypeScript/Vite client, Node.js backend, Ollama model discovery/streaming chat boundary, conversation persistence, model roles, Workspaces, private attachment storage, Wardveil-gated attachment release, attachment quotas/deletion, passive-text extraction, read-only knowledge eligibility, bounded Identity/application + Privacy Shield authorization-input assessment, and an opt-in live runtime validator.
+The active Milestone 0 foundation includes a React/TypeScript/Vite client, Node.js backend, Ollama model discovery/streaming chat boundary, conversation persistence, model roles, Workspaces, private attachment storage, Wardveil-gated attachment release, attachment quotas/deletion, passive-text extraction, read-only knowledge eligibility, bounded Identity/application + Privacy Shield authorization-input assessment, an opt-in baseline live runtime validator, and a separately opt-in approved-model runtime validator for one policy-bound exact-model streamed Development request through the existing backend.
 
 The default development server intentionally has no fabricated Wardveil scanner transport. Without an authenticated scanner adapter, uploads remain private/staged and `unverified` rather than becoming eligible for extraction or AI context.
 
@@ -70,6 +70,14 @@ If the application test endpoint requires the current development bearer, `GOREE
 
 A passing run proves only the runtime path exercised. It does not establish GoreeCloud Identity, Wardveil, Privacy Shield, Everkeep, Mesh, exact Glaze UI conformance, deployment, recovery, or Stable production acceptance.
 
+### Approved-model runtime-validation extension
+
+`npm run validate:approved-model-runtime` is a stricter Development evidence path for one exact model request. It requires `VALIDATE_APPROVED_MODEL_RUNTIME=local-development-only`, a protected absolute `VALIDATE_MODEL_POLICY_PATH`, a supported `VALIDATE_MODEL_ROLE`, an exact `VALIDATE_MODEL_PREFERRED`, and a literal-loopback GoreeCloud AI URL. It reuses the protected local policy loader and bounded approved-role preflight, but obtains installed-model discovery through the first-party application before invoking the existing chat endpoint.
+
+The command uses a fixed non-sensitive prompt, bounds JSON/stream size and time, rejects redirects and non-loopback targets, and never prints generated content, bearer values, policy contents/paths, configured URLs or arbitrary upstream bodies. Successful output is sanitized and explicitly scoped to one operator-initiated Development request with `productionInferenceAuthorized=false`, `productionAccepted=false` and `stableQualified=false`.
+
+This extension is not imported by `server/index.mjs`, changes no HTTP route or authentication behavior, does not load models, and does not establish target-host GPU/VRAM capacity, sustained workload suitability, authenticated administrator provenance or platform acceptance. See `docs/APPROVED_MODEL_RUNTIME_VALIDATION.md`.
+
 ## Platform-system requirements
 
 - **Glaze UI:** current mandatory consumer target is Stable **GLAZE UI V1.5 / 1.5.1**. GoreeCloud AI remains migration/reconciliation-required until exact-revision 1.5.1 consumer acceptance is completed; existing 2.x-labeled source is historical migration input and is not current conformance evidence.
@@ -81,7 +89,7 @@ A passing run proves only the runtime path exercised. It does not establish Gore
 
 ## Validation
 
-CI validates application TypeScript, server syntax including authorization/eligibility modules, native server/security/lifecycle/knowledge tests, production client build, Python Wardveil reference behavior, the AI/Wardveil contract, Python compilation, and syntax of the opt-in runtime validator. Live Ollama/Identity/Privacy/Wardveil interoperability remains separate target-environment evidence.
+CI validates application TypeScript, server syntax including authorization/eligibility modules and both runtime validators, native server/security/lifecycle/knowledge/model-routing tests, production client build, Python Wardveil reference behavior, the AI/Wardveil contract, and Python compilation. The approved-model runtime diagnostic has isolated subprocess/loopback tests, but CI never runs real model inference. Live target-host model/hardware, Identity, Privacy, Policy and Wardveil interoperability remains separate acceptance evidence.
 
 ## Stable boundary
 

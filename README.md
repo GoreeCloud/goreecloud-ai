@@ -7,7 +7,10 @@ Native GoreeCloud-owned AI application for private conversations, Workspaces, kn
 ## Project records
 
 - [Specifications](SPECIFICATIONS.md)
-- [Features](FEATURES.md)
+- [Implemented features — canonical current capability state](IMPLEMENTED-FEATURES.md)
+- [Planned/open features — canonical incomplete capability state](PLANNED-FEATURES.md)
+- [Changelogs — canonical repository change history](CHANGELOGS.md)
+- [Feature overview](FEATURES.md)
 - [Benefits](BENEFITS.md)
 - [Competitive objectives](COMPETITIVE-OBJECTIVES.md)
 - [User manual](USER-MANUAL.md)
@@ -18,6 +21,7 @@ Native GoreeCloud-owned AI application for private conversations, Workspaces, kn
 - [Opt-in developer model-routing diagnostic](docs/MODEL_ROUTING_DIAGNOSTIC.md)
 - [Development-only model capability and resource-fit guard](docs/MODEL_RESOURCE_READINESS.md)
 - [Opt-in local model-resource diagnostic](docs/MODEL_RESOURCE_DIAGNOSTIC.md)
+- [Approved local model runtime validation](docs/APPROVED_MODEL_RUNTIME_VALIDATION.md)
 - [Branding authority](BRANDING.md)
 
 ## Product boundary
@@ -45,6 +49,7 @@ The repository includes:
 - Stable GoreeCloud model-role abstraction mapped to replaceable installed Ollama models.
 - Development-only approved 13-role model selector, bounded server-side routing preflight, private local policy-file reader, and loopback-only model discovery. These components are not connected to live chat and grant no production inference authority.
 - Independent operator-declared model capability/resource-fit assessor and a separately opt-in Development-only local diagnostic. The latter samples free system RAM but does not measure GPU VRAM, establish real model capabilities, run inference, or grant authorization.
+- Separately opt-in approved-model runtime validation that requires a protected Development approval policy, exact role/model selection and literal-loopback GoreeCloud AI; it executes one streamed request through the existing backend and emits only sanitized evidence. It does not change live routing or grant production authorization.
 - Persistent conversations with rename, delete, edit/resubmit, regeneration, branching, and lineage metadata.
 - Native Workspaces with instructions, default model role, file references, knowledge/tool placeholders, and research preferences.
 - Private attachment staging, restrictive permissions, SHA-256 binding, quotas, storage usage, deletion, and Workspace reference reconciliation.
@@ -238,6 +243,10 @@ The base validation requires GoreeCloud AI health and Ollama model discovery thr
 
 Successful source checks or runtime validation do not establish Wardveil/Privacy Shield/Everkeep/Identity/Mesh production acceptance, recoverability, exact Glaze UI conformance, deployment readiness, or Stable qualification.
 
+### Approved-model runtime evidence
+
+For a policy-bound exact-model Development check through the existing application path, use `npm run validate:approved-model-runtime` with the explicit opt-in, protected local policy path, functional role and exact preferred model documented in [Approved Local Model Runtime Validation](docs/APPROVED_MODEL_RUNTIME_VALIDATION.md). The command is literal-loopback-only, discards generated text, emits sanitized evidence, and never makes a production/Stable claim.
+
 ## Platform-system acceptance
 
 - **Glaze UI:** the current authoritative Stable consumer target is **GLAZE UI V1.5 / 1.5.1**. GoreeCloud AI remains migration/reconciliation-required until exact-revision product-specific conformance evidence exists. Existing 2.x-labeled source is historical migration input and is not current conformance evidence.
@@ -249,18 +258,9 @@ Successful source checks or runtime validation do not establish Wardveil/Privacy
 
 ## Roadmap
 
-1. Execute and record live application-to-Ollama validation in the intended environment.
-2. Implement authenticated GoreeCloud AI-to-Wardveil Scan transport and controlled clean/malicious/unavailable acceptance.
-3. Implement authenticated GoreeCloud Identity sessions/service identities plus GoreeCloud AI resource/Workspace authorization.
-4. Implement authenticated Privacy Shield PEP/PDP/capability/evidence integration for knowledge operations.
-5. Reconcile and migrate the application to GLAZE UI V1.5 / 1.5.1 and collect exact consumer conformance evidence.
-6. Add separately reviewed parsers/provenance only where security/privacy boundaries are defined.
-7. Implement chunking, embeddings, indexing, retrieval, citations, and native RAG only after authoritative Identity/application/Privacy gates exist.
-8. Integrate GoreeCloud Search for current-information research.
-9. Add Wardveil-governed tools and agents.
-10. Implement Everkeep export, backup, restore, retention, portability, and continuity for application/derived state.
-11. Connect GoreeCloud Mesh contracts and broader first-party interoperability.
-12. Complete runtime/interaction tests, deployment, monitoring, and production-readiness evidence.
+The canonical open feature and capability inventory is [PLANNED-FEATURES.md](PLANNED-FEATURES.md). Implemented capability state is maintained in [IMPLEMENTED-FEATURES.md](IMPLEMENTED-FEATURES.md), and meaningful repository history is recorded in [CHANGELOGS.md](CHANGELOGS.md).
+
+Do not infer completion, deployment, production acceptance or Stable qualification from roadmap position or source-only validation.
 
 ## Visual identity
 

@@ -1,3 +1,5 @@
+> **Feature-state authority:** This file is a convenience overview. The canonical repository-native records are [IMPLEMENTED-FEATURES.md](IMPLEMENTED-FEATURES.md) for implemented capability state and [PLANNED-FEATURES.md](PLANNED-FEATURES.md) for open/incomplete capability state. Meaningful history is maintained in [CHANGELOGS.md](CHANGELOGS.md).
+
 # GoreeCloud AI Features
 
 ## Implemented source foundation
@@ -10,6 +12,7 @@
 - Explicit opt-in developer model-routing diagnostic that composes private local policy and loopback-only installed-model discovery, outputs sanitized selection state, and never invokes inference or grants authorization.
 - Pure Development-only resource candidate assessment for operator-declared model roles, modalities, token/context budgets, memory estimates/reserves and concurrency headroom. A candidate never authorizes inference, tools or runtime acceptance.
 - Separately opt-in local model-resource diagnostic that reads protected policy/profile files, discovers only literal-loopback installed model names, samples free system RAM, and outputs a sanitized non-authorizing candidate or refusal.
+- Separately opt-in approved-model runtime validator that binds an exact role/model to the protected Development policy and application-backed installed-model discovery, executes one streamed request through literal-loopback GoreeCloud AI, and emits sanitized evidence without generated text or credentials. It does not authorize production inference.
 - Native Workspace persistence for instructions, default model role, file references, knowledge placeholders, tools, and research preferences.
 - Private attachment staging, restrictive permissions, SHA-256 binding, metadata records, quotas, storage usage, and deletion/reference reconciliation.
 - Node-native Wardveil artifact trust gate with current authoritative clean-evidence checks, post-scan digest verification, fail-closed unavailable/unknown behavior, and non-destructive quarantine handoff state.
