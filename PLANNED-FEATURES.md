@@ -41,9 +41,9 @@ Implement accepted backup/restore/export/recovery, management, service coordinat
 
 ## Pending consumer work
 
-### Current Stable Glaze UI consumer conformance
+### Current Stable Glaze UI 1.6.0 consumer conformance
 
-Adopt the current authoritative Stable Glaze UI revision and complete exact-revision product accessibility, responsive, performance and conformance evidence. Version authority must be verified from the current Glaze UI source before promotion.
+Adopt current Official Stable **GLAZE UI V1.6 / 1.6.0** from the live `GoreeCloud/glaze-ui` lifecycle authority and complete exact-revision product accessibility, responsive, performance and conformance evidence. Shared Glaze UI Stable status does not certify the GoreeCloud AI consumer.
 
 ### Application Foundation adoption
 

@@ -152,7 +152,7 @@ A passing runtime validation proves only the application/runtime path exercised 
 
 ## Glaze UI Migration State
 
-The current authoritative Stable consumer target is **GLAZE UI V1.1 / 1.1.0**. Existing 2.x-labeled source is historical migration input and does not establish current conformance. GoreeCloud AI remains migration/reconciliation-required until its interface targets the accepted 1.1.0 revision and completes application-specific exact-revision conformance/acceptance. Design-system promotion does not automatically promote this application.
+The current authoritative Stable consumer target is **GLAZE UI V1.6 / 1.6.0**. Existing 2.x-labeled source is historical migration input and does not establish current conformance. GoreeCloud AI remains migration/reconciliation-required until its interface targets the accepted 1.6.0 revision and completes application-specific exact-revision conformance/acceptance. Design-system promotion does not automatically promote this application.
 
 ## Privacy and External Processing
 
@@ -176,7 +176,7 @@ The Draft branch still requires, among other evidence:
 - GoreeCloud Mesh integration where required;
 - additional safe parser decisions before broader ingestion;
 - actual provenance/chunking/embeddings/indexing/retrieval/RAG/model-context execution with permission and privacy enforcement;
-- migration/reconciliation to GLAZE UI V1.1 / 1.1.0 and exact current consumer conformance evidence;
+- migration/reconciliation to GLAZE UI V1.6 / 1.6.0 and exact current consumer conformance evidence;
 - deployment and broader production-readiness validation.
 
 Do not represent successful source checks, a knowledge-eligibility/authorization assessment, or local runtime validation as Stable or production-ready evidence.

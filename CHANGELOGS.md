@@ -4,6 +4,12 @@ This repository-local changelog records meaningful source, architecture, securit
 
 ## 2026-09-23
 
+### Corrected — current Glaze UI consumer authority
+
+- Reconciled GoreeCloud AI's machine-readable Platform Contract declaration and current repository documentation to Official Stable GLAZE UI V1.6 / 1.6.0 after verifying the live `GoreeCloud/glaze-ui` lifecycle registry.
+- Retained GoreeCloud AI as applicable-blocked/nonconformant for Glaze UI until this application implements 1.6.0 and produces its own exact-revision consumer acceptance evidence; the shared Glaze release does not certify this consumer.
+
+
 ### Added — approved model-routing Development foundation
 
 - Added a fail-closed approved-model selector for 13 functional roles, bounded backend preflight, protected local policy reader and literal-loopback model discovery.
