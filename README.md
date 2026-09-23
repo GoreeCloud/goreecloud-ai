@@ -15,6 +15,7 @@ Native GoreeCloud-owned AI application for private conversations, Workspaces, kn
 - [Development model routing](docs/MODEL_ROUTING.md)
 - [Bounded routing preflight](docs/MODEL_ROUTING_PREFLIGHT.md)
 - [Local-only routing adapters](docs/MODEL_ROUTING_LOCAL_ADAPTERS.md)
+- [Opt-in developer model-routing diagnostic](docs/MODEL_ROUTING_DIAGNOSTIC.md)
 - [Branding authority](BRANDING.md)
 
 ## Product boundary
@@ -204,6 +205,10 @@ Candidate models are not permanent dependencies.
 | `REQUEST_TIMEOUT_MS` | `120000` | Ollama upstream timeout. |
 
 Do not commit `.env`, `data/`, or reusable credentials.
+
+## Operator-initiated model-routing diagnostic
+
+An explicit, development-only `npm run validate:model-routing` command composes the private local policy reader, local-only discovery adapter, and approved-role preflight. It requires an explicit operator opt-in and an absolute path to a private local policy file; see [diagnostic instructions](docs/MODEL_ROUTING_DIAGNOSTIC.md). It calls only local `/api/tags`, never runs inference, does not modify the HTTP API, and always returns `inferenceAuthorized: false` for a selection. No production authorization or live integration claim is implied.
 
 ## Local development and validation
 

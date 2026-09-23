@@ -7,6 +7,7 @@
 - Persistent conversations with rename, edit/resubmit, regeneration, branching, and explicit branch lineage.
 - Stable GoreeCloud model roles mapped to replaceable installed runtime models.
 - Development-only approved 13-role model routing selector and bounded backend preflight with local-policy file and loopback discovery adapters; not wired to inference, authenticated administration, or platform-system decisions.
+- Explicit opt-in developer model-routing diagnostic that composes private local policy and loopback-only installed-model discovery, outputs sanitized selection state, and never invokes inference or grants authorization.
 - Native Workspace persistence for instructions, default model role, file references, knowledge placeholders, tools, and research preferences.
 - Private attachment staging, restrictive permissions, SHA-256 binding, metadata records, quotas, storage usage, and deletion/reference reconciliation.
 - Node-native Wardveil artifact trust gate with current authoritative clean-evidence checks, post-scan digest verification, fail-closed unavailable/unknown behavior, and non-destructive quarantine handoff state.
