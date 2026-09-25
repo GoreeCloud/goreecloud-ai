@@ -15,9 +15,9 @@ This legacy file is retained temporarily as migration input for the separately g
 
 | ID | Feature / obligation | Priority | Current state |
 | --- | --- | --- | --- |
-| FR-001 | Reconcile and maintain every current planned or recommended GoreeCloud AI feature from the authoritative project record and verified repository evidence in this roadmap. | High | Ongoing control |
-| FR-002 | Move actionable feature obligations into GoreeCloud Tasks Management when required, preserving priority, dependency, and lifecycle disposition. | High | Ongoing control |
-| FR-003 | Do not mark features implemented, complete, cancelled, or superseded without authoritative evidence and synchronized repository/Drive roadmap updates. | High | Ongoing control |
+| FR-001 | Reconcile every retained planned or recommended GoreeCloud AI obligation into the mandatory repository-native feature-state records using the canonical project specification and verified repository evidence. | High | Pending separate feature-state migration |
+| FR-002 | Keep actionable obligations represented in GoreeCloud Tasks Management while feature-state migration remains incomplete, preserving priority, dependency, blockers, and lifecycle disposition. | High | Active migration control |
+| FR-003 | Do not mark features implemented, complete, cancelled, or superseded without authoritative repository evidence and reconciliation of the repository-native feature-state records. | High | Active evidence rule |
 
 ## Maintenance and synchronization
 
