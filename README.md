@@ -33,3 +33,11 @@ python3 scripts/validate_wardveil_ai_integration.py
 ```
 
 The source integration is not a production malware-protection claim. Deployed authenticated AI-to-Wardveil transport, live scanner/signature health, real application adapters, quarantine execution, Glaze UI states, Privacy Shield acceptance, and active-artifact runtime policy still require target-environment evidence before production acceptance.
+
+
+## Project governance
+
+- [PROJECT-SPECIFICATIONS.md](PROJECT-SPECIFICATIONS.md) — authoritative project scope, planned requirements, architecture, security/privacy boundaries, and acceptance requirements.
+- [PROJECT-RECORD.md](PROJECT-RECORD.md) — significant project history, candidate evidence, governance transitions, and migration record.
+
+Google Drive is not a parallel authority for the project specification or project record. Current implementation claims remain evidence-backed by accepted repository state; unmerged Draft PRs remain candidate evidence only.
