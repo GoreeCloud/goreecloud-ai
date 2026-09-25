@@ -24,6 +24,8 @@ The candidate has introduced or evolved client/backend foundations, Ollama integ
 
 ## 2026-09-24 — Project governance migration candidate
 
+Migration pull request: [PR #3](https://github.com/GoreeCloud/goreecloud-ai/pull/3).
+
 This migration:
 - creates root `PROJECT-SPECIFICATIONS.md`;
 - creates root `PROJECT-RECORD.md`;
