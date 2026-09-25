@@ -1,14 +1,15 @@
 # GoreeCloud AI — Feature Roadmap
 
-**Status:** Active roadmap control  
+**Status:** Deprecated migration control — non-authoritative  
 **As of:** 2026-09-08  
-**Authoritative project record:** Project Specification — AI  
+**Authoritative project specification:** [PROJECT-SPECIFICATIONS.md](PROJECT-SPECIFICATIONS.md)  
+**Authoritative project record:** [PROJECT-RECORD.md](PROJECT-RECORD.md)  
 **Canonical repository:** GoreeCloud/goreecloud-ai
-**Drive control:** `GoreeCloud/Feature Roadmap/GoreeCloud AI/FEATURE-ROADMAP.docx`
+**Former Drive control:** historical migration source only; do not synchronize or recreate as authority
 
 ## Purpose
 
-This file is the repository-side feature roadmap control for GoreeCloud AI. It records current planned and recommended feature work without replacing the authoritative project record, implementation evidence, release gates, or GoreeCloud Tasks Management.
+This legacy file is retained temporarily as migration input for the separately governed repository-native feature-state migration. It is not the authoritative project specification, project record, implemented-feature inventory, planned-feature inventory, or changelog.
 
 ## Roadmap
 
@@ -20,10 +21,10 @@ This file is the repository-side feature roadmap control for GoreeCloud AI. It r
 
 ## Maintenance and synchronization
 
-This roadmap and the corresponding Drive `FEATURE-ROADMAP.docx` must remain materially synchronized with one another and with the authoritative project or service record. Update both copies whenever feature scope, priority, dependency, implementation status, cancellation, supersession, recommendation, or verification state materially changes.
+Do not synchronize this file with Google Drive. Current project requirements belong in `PROJECT-SPECIFICATIONS.md`; significant project history belongs in `PROJECT-RECORD.md`. Feature-state migration must move remaining roadmap obligations into the mandatory repository-local feature files before this legacy file is removed.
 
 No feature may be represented as complete or Stable solely because it appears in this roadmap. Completion and lifecycle claims require the applicable authoritative implementation, validation, review, release, and production evidence.
 
 ## Reconciliation rule
 
-At each material feature change, reconcile this roadmap against the current authoritative project record, repository implementation state, applicable platform-system requirements, and GoreeCloud Tasks Management. Missing obligations, stale status, duplicated work, roadmap drift, or undocumented disposition changes are defects to correct.
+Until the separate feature-state migration is completed, use this file only as migration input. Do not add new Drive synchronization requirements or treat this file as a competing canonical roadmap. Missing obligations, stale status, duplicated work, or undocumented disposition changes must be resolved in the repository-native feature-state migration.
